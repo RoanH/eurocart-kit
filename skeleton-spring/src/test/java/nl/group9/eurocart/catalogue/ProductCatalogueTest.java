@@ -16,12 +16,19 @@ class ProductCatalogueTest {
 	private final ProductCatalogue catalogue = new ProductCatalogue(new ObjectMapper());
 
 	@Test
-	void listsAllFiftyOneProductsWithUniqueIds() {
+	void listsAllSoldProductsWithUniqueIds() {
 		List<Product> products = catalogue.all();
 
-		assertThat(products).hasSize(51);
+		assertThat(products).hasSize(41);
 		assertThat(products).extracting(Product::id).doesNotHaveDuplicates();
 		assertThat(products).extracting(Product::category).contains(Category.EBOOK, Category.LAPTOP);
+	}
+
+	@Test
+	void foodIsNotSoldYet() {
+		assertThat(catalogue.all()).extracting(Product::category).doesNotContain(Category.FOOD);
+		assertThat(catalogue.find("FOD-002")).isEmpty();
+		assertThat(catalogue.exactPrice("FOD-002")).isNull();
 	}
 
 	@Test

@@ -33,10 +33,19 @@ class CartApiTest {
 	}
 
 	@Test
-	void listsWholeCatalogue() throws Exception {
+	void listsTheCatalogueWithoutFood() throws Exception {
 		mockMvc.perform(get("/api/products"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(51));
+				.andExpect(jsonPath("$.length()").value(41))
+				.andExpect(jsonPath("$[?(@.category == 'FOOD')]").isEmpty());
+	}
+
+	@Test
+	void foodCannotBeAddedToTheCart() throws Exception {
+		mockMvc.perform(post("/api/cart/items")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"productId\":\"FOD-002\"}"))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -56,10 +65,10 @@ class CartApiTest {
 	void quantityDefaultsToOne() throws Exception {
 		mockMvc.perform(post("/api/cart/items")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"productId\":\"FOD-002\"}"))
+				.content("{\"productId\":\"MED-001\"}"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.lines[0].quantity").value(1))
-				.andExpect(jsonPath("$.subtotal").value(5.61));
+				.andExpect(jsonPath("$.subtotal").value(10.83));
 	}
 
 	@Test

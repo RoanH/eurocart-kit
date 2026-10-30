@@ -641,12 +641,12 @@
     const FLAGS = {NL: '🇳🇱', DE: '🇩🇪', FR: '🇫🇷', PL: '🇵🇱', CH: '🇨🇭', GB: '🇬🇧'};
     const NUDGE_THRESHOLD = 3;
 
+    // E-books come first: they are the highest-margin product. This order drives the chips and the grid.
     const CATEGORIES = {
-        LAPTOP: '💻 Laptops',
+        EBOOK: '📱 E-books',
         BOOK: '📖 Books',
-        FOOD: '🍎 Food',
-        MEDICINE: '💊 Medicine',
-        EBOOK: '📱 E-books'
+        LAPTOP: '💻 Laptops',
+        MEDICINE: '💊 Medicine'
     };
 
     let products = [];
@@ -741,12 +741,14 @@
         return row;
     }
 
-    // Suggests products not yet bought, favouring categories the customer already shops in.
+    // Suggests products not yet bought: e-books first (highest margin), then categories the customer already
+    // shops in, then the rest. `products` is already sorted with e-books first.
     function fillSuggestions(listId, boxId, exclude, limit, favouredCategories) {
         const candidates = products.filter(p => !exclude.has(p.id));
-        const favoured = candidates.filter(p => favouredCategories.has(p.category));
-        const others = candidates.filter(p => !favouredCategories.has(p.category));
-        const picks = [...favoured, ...others].slice(0, limit);
+        const ebooks = candidates.filter(p => p.category === 'EBOOK');
+        const favoured = candidates.filter(p => p.category !== 'EBOOK' && favouredCategories.has(p.category));
+        const others = candidates.filter(p => p.category !== 'EBOOK' && !favouredCategories.has(p.category));
+        const picks = [...ebooks, ...favoured, ...others].slice(0, limit);
         const list = document.getElementById(listId);
         list.innerHTML = '';
         picks.forEach(p => list.append(suggestionRow(p)));
@@ -1056,7 +1058,11 @@
     document.getElementById('new-order').onclick = () => showStep('cart');
 
     Promise.all([api('/api/products'), api('/api/cart')]).then(([loaded, cart]) => {
-        products = loaded;
+        const rank = category => {
+            const index = Object.keys(CATEGORIES).indexOf(category);
+            return index === -1 ? Object.keys(CATEGORIES).length : index;
+        };
+        products = loaded.toSorted((a, b) => rank(a.category) - rank(b.category));
         renderChips();
         renderCart(cart);
     });

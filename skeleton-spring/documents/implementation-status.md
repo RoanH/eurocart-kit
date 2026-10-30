@@ -26,7 +26,7 @@ Commit `93b606d`. Scope: e-books, Poland only (PLN, PL VAT), guest checkout, eve
 - Tests: new cases in `api/OrderApiTest`.
 
 ## Done: Physical products, shipping and address (Poland only)
-- **Catalogue:** `GET /api/products` and the cart now cover all 51 products, not just e-books. `Category.physical()` is true for everything except `EBOOK`.
+- **Catalogue:** `GET /api/products` and the cart now cover all sold products, not just e-books (51 in `catalogue.json`, of which FOOD, 10 products, is not sold yet: `ProductCatalogue.NOT_SOLD`, so 41 are sold). `Category.physical()` is true for everything except `EBOOK`.
 - **Shipping (R8a, R8b, R9):** a flat EUR 5.00 per order, excl. BTW, converted to PLN (21.74). It is charged once, when the cart holds at least one physical product, also in a mixed cart with e-books. An e-book-only cart pays no shipping. Shipping BTW uses `VatRates.shippingRate(country)`: the high rate everywhere (PL 23%), Switzerland the low rate (2.6%), independent of the products.
 - **Totals:** `CartView` keeps `subtotal`, `vat` and `subtotalInclVAT` for the products only (the cart panel does not show shipping, per Sales). The new fields `shippingRequired`, `shipping`, `shippingVatRate`, `shippingVat`, `orderVat` and `orderTotal` give the real amount to pay. `orderVat` adds the unrounded BTW of the products and of the shipping and rounds once (R22).
 - **Order:** `Order` stores `shipping`, `shippingVatRate`, `shippingVat`, `vat` (incl. shipping), `total` and `shippingAddress`, frozen at order time.

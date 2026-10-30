@@ -13,7 +13,7 @@ Java 21, Spring Boot 4.1, Maven wrapper.
 
 ## What it currently does
 
-- **Catalogue** (`catalogue/`): loads 51 products from `src/main/resources/catalogue.json` (EUR, excl. VAT) and converts prices to PLN on load (`Currency.LOCAL`, hardcoded rates in `Currency`). `Product.price` is the rounded display price only; amounts are calculated from the exact PLN price (`ProductCatalogue.exactPrice`) and rounded only when reported (subtotal, BTW, shipping, total). `GET /api/products` returns all products.
+- **Catalogue** (`catalogue/`): loads 51 products from `src/main/resources/catalogue.json` (EUR, excl. VAT) and converts prices to PLN on load (`Currency.LOCAL`, hardcoded rates in `Currency`). `Product.price` is the rounded display price only; amounts are calculated from the exact PLN price (`ProductCatalogue.exactPrice`) and rounded only when reported (subtotal, BTW, shipping, total). `GET /api/products` returns all sold products: FOOD stays in `catalogue.json` but is not sold yet (`ProductCatalogue.NOT_SOLD`), so 41 products are listed and food cannot be added to the cart. The shop lists e-books first (highest margin).
 - **Cart** (`cart/`): single in-memory cart shared by all users. `GET /api/cart`, `POST /api/cart/items` (`{productId, quantity}`), `DELETE /api/cart/items/{id}`, `DELETE /api/cart`.
 - **VAT/BTW**: rates per country and category in `VatRates`; every cart line uses **PL** rates. Cart VAT is summed unrounded per line and rounded once (HALF_UP, 2 decimals). Cart returns subtotal, VAT and total.
 - **Front-end**: static `src/main/resources/static/index.html`.

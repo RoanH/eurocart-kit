@@ -13,9 +13,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ProductCatalogue {
+
+    /**
+     * Categories that stay in catalogue.json but are not sold yet. They are left out of the catalogue entirely,
+     * so they are not listed and cannot be added to the cart. Remove a category here to start selling it.
+     */
+    private static final Set<Category> NOT_SOLD = Set.of(Category.FOOD);
 
     private final Map<String, Product> productsById;
 
@@ -50,6 +57,9 @@ public class ProductCatalogue {
             });
             Map<String, Product> byId = new LinkedHashMap<>();
             for (Product catalogued : products) {
+                if (NOT_SOLD.contains(catalogued.category())) {
+                    continue;
+                }
                 Product product = inLocalCurrency(catalogued);
                 exactPricesById.put(product.id(), Currency.EUR.convertExact(Currency.LOCAL, catalogued.price()));
                 if (byId.put(product.id(), product) != null) {

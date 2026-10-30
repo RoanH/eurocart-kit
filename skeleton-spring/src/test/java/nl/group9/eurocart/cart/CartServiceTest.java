@@ -26,10 +26,10 @@ class CartServiceTest {
 	@Test
 	void addsProductsAndSumsPricesExcludingVat() {
 		cart.add("BOK-001", 2); // 2 x 12.50 EUR
-		CartView view = cart.add("FOD-002", 1); // 1 x 1.29 EUR
+		CartView view = cart.add("MED-001", 1); // 1 x 2.49 EUR
 
 		assertThat(view.lines()).hasSize(2);
-		assertThat(view.subtotal()).isEqualByComparingTo("114.30"); // 26.29 EUR = 114.3043 PLN
+		assertThat(view.subtotal()).isEqualByComparingTo("119.52"); // 27.49 EUR = 119.5217 PLN
 	}
 
 	@Test
@@ -123,7 +123,7 @@ class CartServiceTest {
 	@Test
 	void physicalProductAddsFlatShippingPerOrder() {
 		cart.add("BOK-001", 1);
-		CartView view = cart.add("FOD-002", 3); // 54.35 + 16.83 = 71.18 net, well below 250 PLN
+		CartView view = cart.add("MED-001", 3); // about 54 + 32 PLN net, well below 250 PLN
 
 		// EUR 5.00 / 0.23 = 21.74 PLN, once per order
 		assertThat(view.shippingRequired()).isTrue();
@@ -147,12 +147,12 @@ class CartServiceTest {
 
 	@Test
 	void thresholdIsMeasuredInclVatNotExclVat() {
-		// 55.16 EUR = 239.83 PLN net (below 250) but 251.82 incl. 5% BTW (above 250)
+		// 54.80 EUR = 238.26 PLN net (below 250) but 250.17 incl. 5% BTW (above 250)
 		cart.add("BOK-001", 4);
-		CartView view = cart.add("FOD-002", 4);
+		CartView view = cart.add("BOK-004", 1);
 
-		assertThat(view.subtotal()).isEqualByComparingTo("239.83");
-		assertThat(view.freeShippingBasis()).isEqualByComparingTo("251.82");
+		assertThat(view.subtotal()).isEqualByComparingTo("238.26");
+		assertThat(view.freeShippingBasis()).isEqualByComparingTo("250.17");
 		assertThat(view.freeShipping()).isTrue();
 		assertThat(view.shipping()).isEqualByComparingTo("0");
 	}
@@ -160,13 +160,13 @@ class CartServiceTest {
 	@Test
 	void belowTheThresholdNormalShippingAppliesAndTheRemainingAmountIsShown() {
 		cart.add("BOK-001", 4);
-		CartView view = cart.add("FOD-002", 3); // 53.87 EUR = 234.22 net + 11.71 BTW = 245.93
+		CartView view = cart.add("MED-001", 1); // 52.49 EUR = 228.22 net + 11.74 BTW = 239.96
 
-		assertThat(view.freeShippingBasis()).isEqualByComparingTo("245.93");
+		assertThat(view.freeShippingBasis()).isEqualByComparingTo("239.96");
 		assertThat(view.freeShipping()).isFalse();
 		assertThat(view.shipping()).isEqualByComparingTo("21.74");
 		// "above" 250: the customer needs to reach 250.01
-		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("4.08");
+		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("10.05");
 	}
 
 	@Test
