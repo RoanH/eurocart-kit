@@ -15,9 +15,12 @@ import java.util.List;
  * @param vat BTW over products and shipping, computed unrounded and rounded once
  * @param total subtotal + shipping + vat
  * @param shippingAddress delivery address, {@code null} when the order has no physical products
+ * @param freeShipping whether the order qualified for free shipping
+ * @param freeShippingThreshold the threshold that applied (local currency), kept for audit
  */
 public record Order(String id, String reference, OrderStatus status, String email, String country,
                 String currency, List<OrderLine> lines, BigDecimal subtotal, BigDecimal shipping,
                 BigDecimal shippingVatRate, BigDecimal shippingVat, BigDecimal vat, BigDecimal total,
-                Address shippingAddress, Instant createdAt, String termsVersion, Instant termsAcceptedAt) {
+                Address shippingAddress, boolean freeShipping, BigDecimal freeShippingThreshold,
+                Instant createdAt, String termsVersion, Instant termsAcceptedAt) {
 }

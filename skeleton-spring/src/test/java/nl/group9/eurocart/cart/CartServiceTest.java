@@ -101,13 +101,80 @@ class CartServiceTest {
 	@Test
 	void physicalProductAddsFlatShippingPerOrder() {
 		cart.add("BOK-001", 1);
-		cart.add("LAP-001", 3);
-		CartView view = cart.add("FOD-002", 10);
+		CartView view = cart.add("FOD-002", 3); // 54.35 + 16.83 = 71.18 net, well below 250 PLN
 
-		// EUR 5.00 / 0.23 = 21.74 PLN, once, whatever is in the cart
+		// EUR 5.00 / 0.23 = 21.74 PLN, once per order
 		assertThat(view.shippingRequired()).isTrue();
+		assertThat(view.freeShipping()).isFalse();
 		assertThat(view.shipping()).isEqualByComparingTo("21.74");
 		assertThat(view.shippingVatRate()).isEqualByComparingTo("23");
+	}
+
+	@Test
+	void shippingIsFreeAboveTheThresholdIncludingVat() {
+		CartView view = cart.add("LAP-001", 1); // 3908.70 PLN, far above 250 PLN
+
+		assertThat(view.freeShippingThreshold()).isEqualByComparingTo("250.00");
+		assertThat(view.freeShipping()).isTrue();
+		assertThat(view.shipping()).isEqualByComparingTo("0");
+		assertThat(view.shippingVat()).isEqualByComparingTo("0");
+		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("0");
+		// no shipping: the order costs exactly the products incl. BTW
+		assertThat(view.orderTotal()).isEqualByComparingTo(view.subtotalInclVAT());
+	}
+
+	@Test
+	void thresholdIsMeasuredInclVatNotExclVat() {
+		// 4 x 54.35 + 4 x 5.61 = 239.84 net (below 250) but 251.83 incl. 5% BTW (above 250)
+		cart.add("BOK-001", 4);
+		CartView view = cart.add("FOD-002", 4);
+
+		assertThat(view.subtotal()).isEqualByComparingTo("239.84");
+		assertThat(view.freeShippingBasis()).isEqualByComparingTo("251.83");
+		assertThat(view.freeShipping()).isTrue();
+		assertThat(view.shipping()).isEqualByComparingTo("0");
+	}
+
+	@Test
+	void belowTheThresholdNormalShippingAppliesAndTheRemainingAmountIsShown() {
+		cart.add("BOK-001", 4);
+		CartView view = cart.add("FOD-002", 3); // 234.23 net + 11.71 BTW = 245.94
+
+		assertThat(view.freeShippingBasis()).isEqualByComparingTo("245.94");
+		assertThat(view.freeShipping()).isFalse();
+		assertThat(view.shipping()).isEqualByComparingTo("21.74");
+		// "above" 250: the customer needs to reach 250.01
+		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("4.07");
+	}
+
+	@Test
+	void ebooksDoNotCountTowardsTheThreshold() {
+		cart.add("EBK-001", 10); // 390.90 PLN of e-books
+		CartView view = cart.add("BOK-001", 1); // only 57.07 incl. BTW counts
+
+		assertThat(view.freeShippingBasis()).isEqualByComparingTo("57.07");
+		assertThat(view.freeShipping()).isFalse();
+		assertThat(view.shipping()).isEqualByComparingTo("21.74");
+		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("192.94");
+	}
+
+	@Test
+	void ebookOnlyCartHasNothingToReachForFreeShipping() {
+		CartView view = cart.add("EBK-001", 10);
+
+		assertThat(view.shippingRequired()).isFalse();
+		assertThat(view.freeShipping()).isFalse();
+		assertThat(view.amountForFreeShipping()).isEqualByComparingTo("0");
+	}
+
+	@Test
+	void thresholdsPerCountryAreInTheLocalCurrency() {
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.NL)).isEqualByComparingTo("50");
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.DE)).isEqualByComparingTo("50");
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.FR)).isEqualByComparingTo("50");
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.PL)).isEqualByComparingTo("250");
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.CH)).isEqualByComparingTo("100");
+		assertThat(FreeShipping.threshold(nl.group9.eurocart.catalogue.Country.GB)).isEqualByComparingTo("45");
 	}
 
 	@Test

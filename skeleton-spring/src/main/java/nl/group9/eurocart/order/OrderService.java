@@ -54,7 +54,8 @@ public class OrderService {
 		String reference = "EC-" + id.toString().substring(0, 8).toUpperCase();
 		Order order = new Order(id.toString(), reference, OrderStatus.PENDING_PAYMENT, email.trim(),
 				"PL", "PLN", lines, view.subtotal(), view.shipping(), view.shippingVatRate(),
-				view.shippingVat(), view.orderVat(), view.orderTotal(), address, now, Terms.CURRENT_VERSION, now);
+				view.shippingVat(), view.orderVat(), view.orderTotal(), address, view.freeShipping(),
+				view.freeShippingThreshold(), now, Terms.CURRENT_VERSION, now);
 		orders.put(order.id(), order);
 		cart.clear();
 		return order;

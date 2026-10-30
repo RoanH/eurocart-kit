@@ -70,7 +70,24 @@ public class CartService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         boolean shippingRequired = lines.stream().anyMatch(line -> line.product().category().physical());
-        BigDecimal shipping = shippingRequired
+
+        // Free shipping threshold: physical products only, incl. BTW (rounded once), after discount
+        // (there are no discounts yet, so the line totals are already the discounted values).
+        List<CartLine> physical = lines.stream().filter(line -> line.product().category().physical()).toList();
+        BigDecimal physicalNet = physical.stream().map(CartLine::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal physicalVat = physical.stream()
+                .map(line -> CartLine.exactVat(line.lineTotal(), line.vatRate()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal freeShippingBasis = physicalNet.add(physicalVat);
+        BigDecimal threshold = FreeShipping.threshold(Country.PL);
+        // "Above the threshold": an order of exactly the threshold still pays shipping.
+        boolean freeShipping = shippingRequired && freeShippingBasis.compareTo(threshold) > 0;
+        BigDecimal amountForFreeShipping = shippingRequired && !freeShipping
+                ? threshold.subtract(freeShippingBasis).add(new BigDecimal("0.01"))
+                : BigDecimal.ZERO.setScale(2);
+
+        BigDecimal shipping = shippingRequired && !freeShipping
                 ? Currency.EUR.convertTo(Currency.LOCAL, SHIPPING_EUR)
                 : BigDecimal.ZERO.setScale(2);
         BigDecimal shippingVatRate = VatRates.shippingRate(Country.PL);
@@ -83,7 +100,8 @@ public class CartService {
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal orderTotal = subtotal.add(shipping).add(orderVat);
         return new CartView(lines, subtotal, vat, subtotal.add(vat), shippingRequired, shipping,
-                shippingVatRate, shippingVat, orderVat, orderTotal);
+                shippingVatRate, shippingVat, orderVat, orderTotal, threshold, freeShippingBasis,
+                freeShipping, amountForFreeShipping);
     }
 
     private Product product(String productId) {

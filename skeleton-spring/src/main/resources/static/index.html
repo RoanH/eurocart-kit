@@ -275,6 +275,7 @@
                 </tr>
                 </tfoot>
             </table>
+            <p class="muted" id="free-shipping-hint" hidden></p>
             <p><button id="checkout-btn" class="primary">Checkout</button></p>
         </div>
 
@@ -302,6 +303,7 @@
                 </tr>
                 </tfoot>
             </table>
+            <p class="muted" id="checkout-free-shipping-hint" hidden></p>
             <h3>Contact</h3>
             <label for="email">Email</label>
             <input id="email" type="email" autocomplete="email">
@@ -432,7 +434,21 @@
         }
     }
 
+    // Tells the customer how much more to spend on physical products (e-books do not count) for free shipping.
+    function showFreeShippingHint(element, cart) {
+        if (!cart.shippingRequired) {
+            element.hidden = true;
+            return;
+        }
+        element.textContent = cart.freeShipping
+            ? 'Your order qualifies for free shipping.'
+            : `Add ${money.format(cart.amountForFreeShipping)} more of physical products (incl. VAT) for free shipping above ${money.format(cart.freeShippingThreshold)}. E-books do not count.`;
+        element.hidden = false;
+    }
+
     function renderCart(cart) {
+        showFreeShippingHint(document.getElementById('free-shipping-hint'), cart);
+
         const tbody = document.getElementById('cart-lines');
         tbody.innerHTML = '';
         for (const line of cart.lines) {
@@ -612,8 +628,10 @@
         document.getElementById('checkout-subtotal').textContent = money.format(cart.subtotal);
         const shippingRow = document.getElementById('checkout-shipping-row');
         shippingRow.hidden = !shippingRequired;
-        document.getElementById('checkout-shipping').textContent =
-            `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
+        document.getElementById('checkout-shipping').textContent = cart.freeShipping
+            ? 'Free'
+            : `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
+        showFreeShippingHint(document.getElementById('checkout-free-shipping-hint'), cart);
         document.getElementById('checkout-vat').textContent = money.format(cart.orderVat);
         document.getElementById('checkout-total').textContent = money.format(cart.orderTotal);
         showStep('checkout');
@@ -672,10 +690,11 @@
             total.textContent = money.format(line.lineTotal);
         }
         document.getElementById('order-subtotal').textContent = money.format(order.subtotal);
-        const hasShipping = Number(order.shipping) > 0;
+        const hasShipping = Number(order.shipping) > 0 || order.freeShipping;
         document.getElementById('order-shipping-row').hidden = !hasShipping;
-        document.getElementById('order-shipping').textContent =
-            `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
+        document.getElementById('order-shipping').textContent = order.freeShipping
+            ? 'Free'
+            : `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
         document.getElementById('order-vat').textContent = money.format(order.vat);
         document.getElementById('order-total').textContent = money.format(order.total);
         form.reset();

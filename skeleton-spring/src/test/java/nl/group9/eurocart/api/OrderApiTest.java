@@ -169,6 +169,43 @@ class OrderApiTest {
 	}
 
 	@Test
+	void orderAboveThresholdIsStoredWithFreeShipping() throws Exception {
+		cartService.add("LAP-001", 1); // 3908.70 PLN, above the 250 PLN threshold
+		var cart = cartService.view();
+
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID_WITH_ADDRESS))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.freeShipping").value(true))
+				.andExpect(jsonPath("$.freeShippingThreshold").value(250.00))
+				.andExpect(jsonPath("$.shipping").value(0))
+				.andExpect(jsonPath("$.shippingVat").value(0))
+				.andExpect(jsonPath("$.total").value(cart.subtotalInclVAT().doubleValue()))
+				// free shipping does not remove the need for an address
+				.andExpect(jsonPath("$.shippingAddress.city").value("Gdańsk"));
+	}
+
+	@Test
+	void orderBelowThresholdPaysShippingAndIsNotFree() throws Exception {
+		cartService.add("BOK-001", 1);
+
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID_WITH_ADDRESS))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.freeShipping").value(false))
+				.andExpect(jsonPath("$.shipping").value(21.74));
+	}
+
+	@Test
+	void ebooksAloneNeverCountTowardsFreeShippingEvenAboveTheThreshold() throws Exception {
+		cartService.add("EBK-001", 10); // 390.90 PLN of e-books, above the threshold but not physical
+		cartService.add("BOK-001", 1);
+
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID_WITH_ADDRESS))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.freeShipping").value(false))
+				.andExpect(jsonPath("$.shipping").value(21.74));
+	}
+
+	@Test
 	void ebookOnlyOrderIgnoresAnAddress() throws Exception {
 		cartService.add("EBK-001", 1);
 
