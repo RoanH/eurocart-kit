@@ -72,7 +72,25 @@ public class CartService {
         BigDecimal vat = round(exactProductVat);
 
         boolean shippingRequired = lines.stream().anyMatch(line -> line.product().category().physical());
-        BigDecimal exactShipping = shippingRequired
+
+        // Free shipping threshold: physical products only, incl. BTW (rounded once), after discount
+        // (there are no discounts yet, so the line amounts are already the discounted values).
+        List<CartLine> physical = lines.stream().filter(line -> line.product().category().physical()).toList();
+        BigDecimal exactPhysicalNet = physical.stream()
+                .map(line -> exactNets.get(line.product().id()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal exactPhysicalVat = physical.stream()
+                .map(line -> CartLine.exactVat(exactNets.get(line.product().id()), line.vatRate()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal freeShippingBasis = round(exactPhysicalNet).add(round(exactPhysicalVat));
+        BigDecimal threshold = FreeShipping.threshold(Country.PL);
+        // "Above the threshold": an order of exactly the threshold still pays shipping.
+        boolean freeShipping = shippingRequired && freeShippingBasis.compareTo(threshold) > 0;
+        BigDecimal amountForFreeShipping = shippingRequired && !freeShipping
+                ? threshold.subtract(freeShippingBasis).add(new BigDecimal("0.01"))
+                : BigDecimal.ZERO.setScale(2);
+
+        BigDecimal exactShipping = shippingRequired && !freeShipping
                 ? Currency.EUR.convertExact(Currency.LOCAL, SHIPPING_EUR)
                 : BigDecimal.ZERO;
         BigDecimal shipping = round(exactShipping);
@@ -83,7 +101,8 @@ public class CartService {
         BigDecimal orderVat = round(exactProductVat.add(exactShippingVat));
         BigDecimal orderTotal = subtotal.add(shipping).add(orderVat);
         return new CartView(lines, subtotal, vat, subtotal.add(vat), shippingRequired, shipping,
-                shippingVatRate, shippingVat, orderVat, orderTotal);
+                shippingVatRate, shippingVat, orderVat, orderTotal, threshold, freeShippingBasis,
+                freeShipping, amountForFreeShipping);
     }
 
     private static BigDecimal round(BigDecimal amount) {

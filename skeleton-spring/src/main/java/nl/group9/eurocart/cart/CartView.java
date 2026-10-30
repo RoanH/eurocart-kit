@@ -17,8 +17,15 @@ import java.util.List;
  * @param shippingVat BTW on the shipping costs, rounded for display only
  * @param orderVat BTW over products and shipping together, rounded once
  * @param orderTotal total to pay: subtotal + shipping + orderVat
+ * @param freeShippingThreshold order value above which shipping is free, in the local currency
+ * @param freeShippingBasis the order value compared with the threshold: physical products only, after discount,
+ *        including BTW (e-books do not count)
+ * @param freeShipping whether the order qualifies for free shipping, so {@code shipping} is zero
+ * @param amountForFreeShipping how much more physical products (incl. BTW) the customer must add to get free
+ *        shipping; zero when nothing is shipped or shipping is already free
  */
 public record CartView(List<CartLine> lines, BigDecimal subtotal, BigDecimal vat, BigDecimal subtotalInclVAT,
 		boolean shippingRequired, BigDecimal shipping, BigDecimal shippingVatRate, BigDecimal shippingVat,
-		BigDecimal orderVat, BigDecimal orderTotal) {
+		BigDecimal orderVat, BigDecimal orderTotal, BigDecimal freeShippingThreshold, BigDecimal freeShippingBasis,
+		boolean freeShipping, BigDecimal amountForFreeShipping) {
 }

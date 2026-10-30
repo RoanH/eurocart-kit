@@ -35,6 +35,16 @@ Commit `93b606d`. Scope: e-books, Poland only (PLN, PL VAT), guest checkout, eve
 - Tests: new cases in `CartServiceTest`, `CartApiTest`, `OrderApiTest` and `ProductCatalogueTest`.
 - Open: customer names and addresses are kept in memory (A25); the T&Cs text (`2026-10-v1`) still only covers e-books and needs shipping and withdrawal rules for physical goods, probably a new version.
 
+## Done: Free shipping threshold (SAL-1)
+- **Rule:** shipping is free when the physical products in the order are worth **more than** the threshold of the country, measured after discount and including BTW. An order of exactly the threshold still pays shipping. Below it the normal EUR 5.00 applies (R8a).
+- **Thresholds** (`cart/FreeShipping`, in the currency of the country, not converted): NL/DE/FR EUR 50, PL **250 PLN**, CH 100 CHF, UK GBP 45. Only Poland is live, so `CartService` uses `Country.PL` for now.
+- **E-books do not count** towards the threshold, they have no shipping. An e-book-only cart has nothing to reach and never shows the hint. A mixed cart is measured on its physical lines only.
+- **Basis:** physical net + BTW of those lines (BTW summed unrounded, rounded once). There are no discounts yet; when they land, the basis must use the discounted line totals (the code has a comment where).
+- **Cart/order fields:** `CartView` gets `freeShippingThreshold`, `freeShippingBasis`, `freeShipping` and `amountForFreeShipping` (the amount still to add, to get *above* the threshold, so threshold minus basis plus 0.01). `Order` stores `freeShipping` and `freeShippingThreshold` for audit.
+- **Free shipping** means shipping and shipping BTW are 0, the total is just products incl. BTW. The shipping address is still required, the goods are still sent.
+- **Front-end:** the cart panel and the checkout step show "Add X more of physical products (incl. VAT) for free shipping above Y. E-books do not count." or "Your order qualifies for free shipping." Checkout and summary show shipping as "Free".
+- Tests: new cases in `CartServiceTest` (above/below/exactly incl. BTW vs excl., e-books ignored, all six thresholds) and `OrderApiTest`.
+- Open: thresholds are not yet used for other countries (country selection is not built); the rule "after discount" is not testable until discounts exist; conversion of the thresholds for display in euro on other markets is not decided (A5).
 ## Deviations from slices-checkout.md
 - **No name field.** The product owner does not need the customer's name; the form, the API request and `Order` carry only `email`. Slices 1.1/1.2 still say "name and email".
 - Slice 1.3 has no "Pay now" button (that arrives with 3.1).

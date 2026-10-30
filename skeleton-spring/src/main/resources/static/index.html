@@ -324,6 +324,16 @@
             font-weight: 700;
         }
 
+        .hint {
+            margin: .8rem 0;
+            padding: .6rem .9rem;
+            border-radius: 14px;
+            background: var(--mint);
+            color: var(--mint-ink);
+            font-weight: 700;
+            font-size: .9rem;
+        }
+
         .suggestions {
             margin-top: 1rem;
         }
@@ -519,6 +529,7 @@
                 <h2>Your cart</h2>
                 <div id="cart-lines"></div>
                 <div id="nudge" class="nudge" hidden></div>
+                <div id="free-shipping-hint" class="hint" hidden></div>
                 <div class="totals" id="totals">
                     <div><span>Subtotal (excl. VAT)</span><span id="subtotal">0,00 zł</span></div>
                     <div><span>BTW</span><span id="vat">0,00 zł</span></div>
@@ -539,6 +550,7 @@
                     <div><span>BTW</span><span id="checkout-vat"></span></div>
                     <div class="grand"><span>Total to pay</span><span id="checkout-total"></span></div>
                 </div>
+                <div id="checkout-free-shipping-hint" class="hint" hidden></div>
                 <h3>Contact</h3>
                 <label for="email">Email</label>
                 <input id="email" type="email" autocomplete="email">
@@ -741,8 +753,21 @@
         document.getElementById(boxId).hidden = picks.length === 0;
     }
 
+    // Tells the customer how much more to spend on physical products (e-books do not count) for free shipping.
+    function showFreeShippingHint(element, cart) {
+        if (!cart.shippingRequired) {
+            element.hidden = true;
+            return;
+        }
+        element.textContent = cart.freeShipping
+            ? '🚚 Your order qualifies for free shipping!'
+            : `🚚 Add ${money.format(cart.amountForFreeShipping)} more of physical products (incl. VAT) for free shipping above ${money.format(cart.freeShippingThreshold)}. E-books do not count.`;
+        element.hidden = false;
+    }
+
     function renderCart(cart) {
         currentCart = cart;
+        showFreeShippingHint(document.getElementById('free-shipping-hint'), cart);
         const lines = document.getElementById('cart-lines');
         lines.innerHTML = '';
         if (cart.lines.length === 0) {
@@ -951,8 +976,10 @@
             : 'Delivery to Poland by email, no shipping costs.';
         document.getElementById('checkout-subtotal').textContent = money.format(cart.subtotal);
         document.getElementById('checkout-shipping-row').hidden = !shippingRequired;
-        document.getElementById('checkout-shipping').textContent =
-            `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
+        document.getElementById('checkout-shipping').textContent = cart.freeShipping
+            ? 'Free'
+            : `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
+        showFreeShippingHint(document.getElementById('checkout-free-shipping-hint'), cart);
         document.getElementById('checkout-vat').textContent = money.format(cart.orderVat);
         document.getElementById('checkout-total').textContent = money.format(cart.orderTotal);
         showStep('checkout');
@@ -1009,10 +1036,11 @@
             container.append(row);
         }
         document.getElementById('order-subtotal').textContent = money.format(order.subtotal);
-        const hasShipping = Number(order.shipping) > 0;
+        const hasShipping = Number(order.shipping) > 0 || order.freeShipping;
         document.getElementById('order-shipping-row').hidden = !hasShipping;
-        document.getElementById('order-shipping').textContent =
-            `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
+        document.getElementById('order-shipping').textContent = order.freeShipping
+            ? 'Free'
+            : `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
         document.getElementById('order-vat').textContent = money.format(order.vat);
         document.getElementById('order-total').textContent = money.format(order.total);
         const boughtIds = new Set(order.lines.map(l => l.productId));
