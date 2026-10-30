@@ -133,8 +133,62 @@
             background: var(--yellow);
         }
 
-        #pay {
+        button.primary {
             background: var(--orange);
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        button.primary:disabled:hover {
+            background: var(--orange);
+        }
+
+        form label {
+            display: block;
+            margin: .6rem 0 .2rem;
+            font-weight: 700;
+            font-size: .85rem;
+            text-transform: uppercase;
+        }
+
+        form label.check {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            text-transform: none;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        form input[type=checkbox] {
+            width: auto;
+        }
+
+        form input:not([type=checkbox]) {
+            width: 100%;
+            box-sizing: border-box;
+            padding: .4rem;
+            border: 1px solid var(--ink);
+            font: inherit;
+            background: #fff;
+        }
+
+        form input[readonly] {
+            background: var(--paper);
+            color: var(--muted);
+        }
+
+        .field-error {
+            color: #a32112;
+            font-size: .85rem;
+            min-height: 1.1em;
+        }
+
+        [hidden] {
+            display: none !important;
         }
 
         button:focus-visible {
@@ -182,42 +236,81 @@
         <div id="products"></div>
     </section>
     <section>
-        <h2>Cart</h2>
-        <table>
-            <thead>
-            <tr>
-                <th>Product</th>
-                <th class="num">Qty</th>
-                <th class="num">Line total</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody id="cart-lines"></tbody>
-            <tfoot>
-            <tr>
-                <td>Subtotal (excl. VAT)</td>
-                <td></td>
-                <td class="num" id="subtotal">0,00 zł</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>BTW</td>
-                <td></td>
-                <td class="num" id="vat">0,00 zł</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Subtotal (incl. VAT)</td>
-                <td></td>
-                <td class="num" id="subtotalInclVAT">0,00 zł</td>
-                <td></td>
-            </tr>
-            </tfoot>
-        </table>
-        <p>
-            <button id="pay">Pay</button>
-        </p>
-        <p id="payment-message" class="success"></p>
+        <div id="cart-view">
+            <h2>Cart</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Product</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Line total</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="cart-lines"></tbody>
+                <tfoot>
+                <tr>
+                    <td>Subtotal (excl. VAT)</td>
+                    <td></td>
+                    <td class="num" id="subtotal">0,00 zł</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>BTW</td>
+                    <td></td>
+                    <td class="num" id="vat">0,00 zł</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Total (incl. VAT)</td>
+                    <td></td>
+                    <td class="num" id="subtotalInclVAT">0,00 zł</td>
+                    <td></td>
+                </tr>
+                </tfoot>
+            </table>
+            <p><button id="checkout-btn" class="primary">Checkout</button></p>
+        </div>
+
+        <form id="checkout-form" novalidate hidden>
+            <h2>Where should we send your e-books?</h2>
+            <p class="muted">Total to pay: <strong id="checkout-total"></strong></p>
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email">
+            <div class="field-error" id="email-error"></div>
+            <label for="email2">Confirm email</label>
+            <input id="email2" type="email" autocomplete="off">
+            <div class="field-error" id="email2-error"></div>
+            <p class="muted">Delivery to Poland by email, no shipping costs.</p>
+            <label class="check"><input type="checkbox" id="terms"> I accept the Terms &amp; Conditions</label>
+            <p>
+                <button type="submit" id="place-order" class="primary" disabled>Place order</button>
+                <button type="button" id="back-to-cart">Back</button>
+            </p>
+        </form>
+
+        <div id="summary" hidden>
+            <h2>Order <span id="order-ref"></span></h2>
+            <p class="muted">Sent to <strong id="order-email"></strong>, no shipping costs.</p>
+            <table>
+                <tbody id="order-lines"></tbody>
+                <tfoot>
+                <tr>
+                    <td>Subtotal (excl. VAT)</td>
+                    <td class="num" id="order-subtotal"></td>
+                </tr>
+                <tr>
+                    <td>BTW</td>
+                    <td class="num" id="order-vat"></td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td class="num" id="order-total"></td>
+                </tr>
+                </tfoot>
+            </table>
+            <p><button id="new-order">Continue shopping</button></p>
+        </div>
     </section>
 </main>
 
@@ -301,18 +394,97 @@
         renderCart(await api(`/api/cart/items/${productId}`, {method: 'DELETE'}));
     }
 
-    document.getElementById('pay').onclick = async () => {
-        const messageEl = document.getElementById('payment-message');
-        messageEl.textContent = '';
+    const cartView = document.getElementById('cart-view');
+    const form = document.getElementById('checkout-form');
+    const summaryEl = document.getElementById('summary');
+    const emailInput = document.getElementById('email');
+    const email2Input = document.getElementById('email2');
+    const termsInput = document.getElementById('terms');
+    const placeOrder = document.getElementById('place-order');
+    const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+    // The cart panel shows exactly one step at a time: 'cart', 'checkout' or 'summary'.
+    function showStep(step) {
+        cartView.hidden = step !== 'cart';
+        form.hidden = step !== 'checkout';
+        summaryEl.hidden = step !== 'summary';
+    }
+
+    // Errors only appear for fields the customer has touched, or on submit.
+    function validate(showAll) {
+        const email = emailInput.value.trim();
+        const problems = {
+            email: EMAIL.test(email) ? '' : 'Please enter a valid email address.',
+            email2: email2Input.value.trim() === email ? '' : 'The email addresses do not match.'
+        };
+        for (const [field, message] of Object.entries(problems)) {
+            const show = showAll || document.getElementById(field).dataset.touched;
+            document.getElementById(`${field}-error`).textContent = show ? message : '';
+        }
+        const valid = Object.values(problems).every(message => !message);
+        placeOrder.disabled = !(valid && termsInput.checked);
+        return valid;
+    }
+
+    for (const input of [emailInput, email2Input]) {
+        input.addEventListener('input', () => {
+            input.dataset.touched = 'true';
+            validate(false);
+        });
+    }
+
+    termsInput.addEventListener('change', () => validate(false));
+
+    document.getElementById('checkout-btn').onclick = async () => {
         const cart = await api('/api/cart');
         if (cart.lines.length === 0) {
             errorEl.textContent = 'Your cart is empty.';
             return;
         }
-        const total = money.format(cart.subtotalInclVAT);
-        renderCart(await api('/api/cart', {method: 'DELETE'}));
-        messageEl.textContent = `Payment of ${total} successful. Thank you for your order!`;
+        document.getElementById('checkout-total').textContent = money.format(cart.subtotalInclVAT);
+        showStep('checkout');
+        validate(false);
+        emailInput.focus();
     };
+
+    document.getElementById('back-to-cart').onclick = () => showStep('cart');
+
+    form.onsubmit = async event => {
+        event.preventDefault();
+        if (!validate(true) || !termsInput.checked) {
+            return;
+        }
+        const order = await api('/api/orders', {
+            method: 'POST',
+            body: JSON.stringify({email: emailInput.value.trim()})
+        });
+        renderCart(await api('/api/cart'));
+        showSummary(order);
+    };
+
+    function showSummary(order) {
+        document.getElementById('order-ref').textContent = order.reference;
+        document.getElementById('order-email').textContent = order.email;
+        const tbody = document.getElementById('order-lines');
+        tbody.innerHTML = '';
+        for (const line of order.lines) {
+            const row = tbody.insertRow();
+            row.insertCell().textContent = `${line.quantity} × ${line.name}`;
+            const total = row.insertCell();
+            total.className = 'num';
+            total.textContent = money.format(line.lineTotal);
+        }
+        document.getElementById('order-subtotal').textContent = money.format(order.subtotal);
+        document.getElementById('order-vat').textContent = money.format(order.vat);
+        document.getElementById('order-total').textContent = money.format(order.total);
+        form.reset();
+        for (const input of [emailInput, email2Input]) {
+            delete input.dataset.touched;
+        }
+        showStep('summary');
+    }
+
+    document.getElementById('new-order').onclick = () => showStep('cart');
 
     api('/api/products').then(renderProducts);
     api('/api/cart').then(renderCart);
