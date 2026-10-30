@@ -5,5 +5,12 @@ public enum Category {
 	BOOK,
 	FOOD,
 	MEDICINE,
-	EBOOK
+	EBOOK;
+
+	/**
+	 * Physical products have to be shipped; e-books are delivered by email.
+	 */
+	public boolean physical() {
+		return this != EBOOK;
+	}
 }

@@ -23,9 +23,7 @@ public class ProductCatalogue {
     }
 
     public List<Product> all() {
-        return List.copyOf(productsById.values()).stream()
-                .filter(product -> product.category().equals(Category.EBOOK))
-                .toList();
+        return List.copyOf(productsById.values());
     }
 
     public Optional<Product> find(String id) {

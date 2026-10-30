@@ -1,5 +1,7 @@
 package nl.group9.eurocart.cart;
 
+import nl.group9.eurocart.catalogue.Country;
+import nl.group9.eurocart.catalogue.Currency;
 import nl.group9.eurocart.catalogue.Product;
 import nl.group9.eurocart.catalogue.ProductCatalogue;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,12 @@ import java.util.Map;
 
 @Service
 public class CartService {
+
+    /**
+     * Flat shipping costs per order in EUR, excluding BTW, whatever the products, quantities or weight.
+     * Orders with only e-books have no shipping costs.
+     */
+    private static final BigDecimal SHIPPING_EUR = new BigDecimal("5.00");
 
     private final ProductCatalogue catalogue;
 
@@ -60,7 +68,22 @@ public class CartService {
                 .map(line -> CartLine.exactVat(line.lineTotal(), line.vatRate()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
-        return new CartView(lines, subtotal, vat, subtotal.add(vat));
+
+        boolean shippingRequired = lines.stream().anyMatch(line -> line.product().category().physical());
+        BigDecimal shipping = shippingRequired
+                ? Currency.EUR.convertTo(Currency.LOCAL, SHIPPING_EUR)
+                : BigDecimal.ZERO.setScale(2);
+        BigDecimal shippingVatRate = VatRates.shippingRate(Country.PL);
+        BigDecimal exactShippingVat = CartLine.exactVat(shipping, shippingVatRate);
+        BigDecimal shippingVat = exactShippingVat.setScale(2, RoundingMode.HALF_UP);
+        // Products and shipping BTW are added up unrounded and rounded once, like the rest of the order.
+        BigDecimal orderVat = lines.stream()
+                .map(line -> CartLine.exactVat(line.lineTotal(), line.vatRate()))
+                .reduce(exactShippingVat, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal orderTotal = subtotal.add(shipping).add(orderVat);
+        return new CartView(lines, subtotal, vat, subtotal.add(vat), shippingRequired, shipping,
+                shippingVatRate, shippingVat, orderVat, orderTotal);
     }
 
     private Product product(String productId) {

@@ -13,6 +13,21 @@ public final class VatRates {
 	private VatRates() {
 	}
 
+	/**
+	 * BTW percentage on shipping costs: the standard (high) rate of the country, except
+	 * Switzerland which uses its reduced (low) rate. Independent of the products in the order.
+	 */
+	public static BigDecimal shippingRate(Country country) {
+		return new BigDecimal(switch (country) {
+			case NL -> "21";
+			case DE -> "19";
+			case FR -> "20";
+			case PL -> "23";
+			case CH -> "2.6";
+			case GB -> "20";
+		});
+	}
+
 	public static BigDecimal rate(Country country, Category category) {
 		return new BigDecimal(switch (country) {
 			case NL -> switch (category) {

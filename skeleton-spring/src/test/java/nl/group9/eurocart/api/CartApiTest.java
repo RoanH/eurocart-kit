@@ -33,12 +33,10 @@ class CartApiTest {
 	}
 
 	@Test
-	void listsOnlyEbooks() throws Exception {
+	void listsWholeCatalogue() throws Exception {
 		mockMvc.perform(get("/api/products"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(10))
-				.andExpect(jsonPath("$[0].id").value("EBK-001"))
-				.andExpect(jsonPath("$[0].price").value(39.09));
+				.andExpect(jsonPath("$.length()").value(51));
 	}
 
 	@Test
@@ -100,6 +98,20 @@ class CartApiTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"productId\":\"LAP-001\",\"quantity\":0}"))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void cartWithPhysicalProductShowsShippingAndFinalTotals() throws Exception {
+		// 12.50 EUR = 54.35 PLN, shipping 5.00 EUR = 21.74 PLN at 23%
+		mockMvc.perform(post("/api/cart/items")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"productId\":\"BOK-001\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.shippingRequired").value(true))
+				.andExpect(jsonPath("$.shipping").value(21.74))
+				.andExpect(jsonPath("$.shippingVatRate").value(23))
+				.andExpect(jsonPath("$.orderVat").value(7.72))
+				.andExpect(jsonPath("$.orderTotal").value(83.81));
 	}
 
 }

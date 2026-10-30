@@ -13,11 +13,12 @@ Java 21, Spring Boot 4.1, Maven wrapper.
 
 ## What it currently does
 
-- **Catalogue** (`catalogue/`): loads 51 products from `src/main/resources/catalogue.json` (EUR, excl. VAT) and converts prices to PLN on load (`Currency.LOCAL`, hardcoded rates in `Currency`). `GET /api/products` returns **only EBOOK products** (filter in `ProductCatalogue.all()`).
+- **Catalogue** (`catalogue/`): loads 51 products from `src/main/resources/catalogue.json` (EUR, excl. VAT) and converts prices to PLN on load (`Currency.LOCAL`, hardcoded rates in `Currency`). `GET /api/products` returns all products.
 - **Cart** (`cart/`): single in-memory cart shared by all users. `GET /api/cart`, `POST /api/cart/items` (`{productId, quantity}`), `DELETE /api/cart/items/{id}`, `DELETE /api/cart`.
 - **VAT/BTW**: rates per country and category in `VatRates`; every cart line uses **PL** rates. Cart VAT is summed unrounded per line and rounded once (HALF_UP, 2 decimals). Cart returns subtotal, VAT and total.
 - **Front-end**: static `src/main/resources/static/index.html`.
-- **Not implemented yet**: country selection, shipping, discount codes (`discount.json` exists but is not loaded), quarterly exchange rates, per-market currency.
+- **Shipping**: flat EUR 5.00 per order (excl. BTW, PL high rate 23%), only when the cart holds a physical product (anything but EBOOK). Orders with physical products need a Polish shipping address.
+- **Not implemented yet**: country selection, discount codes (`discount.json` exists but is not loaded), quarterly exchange rates, per-market currency.
 
 ## Conventions
 

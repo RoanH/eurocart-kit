@@ -89,6 +89,56 @@ class CartServiceTest {
 	}
 
 	@Test
+	void ebookOnlyCartHasNoShipping() {
+		CartView view = cart.add("EBK-001", 2);
+
+		assertThat(view.shippingRequired()).isFalse();
+		assertThat(view.shipping()).isEqualByComparingTo("0");
+		assertThat(view.orderVat()).isEqualByComparingTo(view.vat());
+		assertThat(view.orderTotal()).isEqualByComparingTo(view.subtotalInclVAT());
+	}
+
+	@Test
+	void physicalProductAddsFlatShippingPerOrder() {
+		cart.add("BOK-001", 1);
+		cart.add("LAP-001", 3);
+		CartView view = cart.add("FOD-002", 10);
+
+		// EUR 5.00 / 0.23 = 21.74 PLN, once, whatever is in the cart
+		assertThat(view.shippingRequired()).isTrue();
+		assertThat(view.shipping()).isEqualByComparingTo("21.74");
+		assertThat(view.shippingVatRate()).isEqualByComparingTo("23");
+	}
+
+	@Test
+	void mixedCartWithEbookAndPhysicalProductPaysShipping() {
+		cart.add("EBK-001", 1);
+		CartView view = cart.add("BOK-001", 1);
+
+		assertThat(view.shippingRequired()).isTrue();
+		assertThat(view.shipping()).isEqualByComparingTo("21.74");
+	}
+
+	@Test
+	void shippingVatIsAddedUnroundedAndRoundedOnceWithProductVat() {
+		CartView view = cart.add("BOK-001", 1); // 54.35 PLN at 5% = 2.7175, shipping 21.74 at 23% = 5.0002
+
+		assertThat(view.shippingVat()).isEqualByComparingTo("5.00");
+		assertThat(view.orderVat()).isEqualByComparingTo("7.72"); // 7.7177
+		assertThat(view.orderTotal()).isEqualByComparingTo("83.81"); // 54.35 + 21.74 + 7.72
+	}
+
+	@Test
+	void shippingVatIsHighRateEverywhereExceptSwitzerlandWhichIsLow() {
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.NL)).isEqualByComparingTo("21");
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.DE)).isEqualByComparingTo("19");
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.FR)).isEqualByComparingTo("20");
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.PL)).isEqualByComparingTo("23");
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.CH)).isEqualByComparingTo("2.6");
+		assertThat(VatRates.shippingRate(nl.group9.eurocart.catalogue.Country.GB)).isEqualByComparingTo("20");
+	}
+
+	@Test
 	void appliesPolishRates() {
 		CartView view = cart.add("LAP-003", 1); // 5213.04 PLN, laptop at 23%
 

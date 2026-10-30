@@ -21,7 +21,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class OrderApiTest {
 
+	private static final String ADDRESS = "{\"fullName\":\"Anna Kowalska\",\"street\":\"ul. Długa 5\","
+			+ "\"postalCode\":\"80-001\",\"city\":\"Gdańsk\"}";
+
 	private static final String VALID = "{\"email\":\"anna@example.pl\",\"acceptedTermsVersion\":\"2026-10-v1\"}";
+
+	private static final String VALID_WITH_ADDRESS = "{\"email\":\"anna@example.pl\","
+			+ "\"acceptedTermsVersion\":\"2026-10-v1\",\"shippingAddress\":" + ADDRESS + "}";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -58,8 +64,10 @@ class OrderApiTest {
 				.andExpect(jsonPath("$.lines[0].quantity").value(2))
 				.andExpect(jsonPath("$.lines[0].vatRate").value(5))
 				.andExpect(jsonPath("$.subtotal").value(cart.subtotal().doubleValue()))
-				.andExpect(jsonPath("$.vat").value(cart.vat().doubleValue()))
-				.andExpect(jsonPath("$.total").value(cart.subtotalInclVAT().doubleValue()));
+				.andExpect(jsonPath("$.shipping").value(0))
+				.andExpect(jsonPath("$.shippingAddress").doesNotExist())
+				.andExpect(jsonPath("$.vat").value(cart.orderVat().doubleValue()))
+				.andExpect(jsonPath("$.total").value(cart.orderTotal().doubleValue()));
 
 		mockMvc.perform(get("/api/cart")).andExpect(jsonPath("$.lines.length()").value(0));
 	}
@@ -125,6 +133,49 @@ class OrderApiTest {
 	@Test
 	void unknownOrderGivesNotFound() throws Exception {
 		mockMvc.perform(get("/api/orders/does-not-exist")).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void physicalOrderStoresShippingAndAddress() throws Exception {
+		cartService.add("BOK-001", 1);
+
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID_WITH_ADDRESS))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.subtotal").value(54.35))
+				.andExpect(jsonPath("$.shipping").value(21.74))
+				.andExpect(jsonPath("$.shippingVatRate").value(23))
+				.andExpect(jsonPath("$.shippingVat").value(5.00))
+				.andExpect(jsonPath("$.vat").value(7.72))
+				.andExpect(jsonPath("$.total").value(83.81))
+				.andExpect(jsonPath("$.shippingAddress.fullName").value("Anna Kowalska"))
+				.andExpect(jsonPath("$.shippingAddress.postalCode").value("80-001"));
+	}
+
+	@Test
+	void physicalOrderWithoutValidAddressGivesBadRequestAndKeepsCart() throws Exception {
+		cartService.add("BOK-001", 1);
+		for (String body : new String[] {
+				VALID,
+				"{\"email\":\"anna@example.pl\",\"acceptedTermsVersion\":\"2026-10-v1\","
+						+ "\"shippingAddress\":{\"fullName\":\"\",\"street\":\"ul. Długa 5\","
+						+ "\"postalCode\":\"80-001\",\"city\":\"Gdańsk\"}}",
+				"{\"email\":\"anna@example.pl\",\"acceptedTermsVersion\":\"2026-10-v1\","
+						+ "\"shippingAddress\":{\"fullName\":\"Anna\",\"street\":\"ul. Długa 5\","
+						+ "\"postalCode\":\"8001\",\"city\":\"Gdańsk\"}}" }) {
+			mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(body))
+					.andExpect(status().isBadRequest());
+		}
+		mockMvc.perform(get("/api/cart")).andExpect(jsonPath("$.lines.length()").value(1));
+	}
+
+	@Test
+	void ebookOnlyOrderIgnoresAnAddress() throws Exception {
+		cartService.add("EBK-001", 1);
+
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID_WITH_ADDRESS))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.shipping").value(0))
+				.andExpect(jsonPath("$.shippingAddress").doesNotExist());
 	}
 
 }

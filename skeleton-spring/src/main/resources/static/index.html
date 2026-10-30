@@ -279,15 +279,59 @@
         </div>
 
         <form id="checkout-form" novalidate hidden>
-            <h2>Where should we send your e-books?</h2>
-            <p class="muted">Total to pay: <strong id="checkout-total"></strong></p>
+            <h2>Checkout</h2>
+            <table>
+                <tbody>
+                <tr>
+                    <td>Subtotal (excl. VAT)</td>
+                    <td class="num" id="checkout-subtotal"></td>
+                </tr>
+                <tr id="checkout-shipping-row">
+                    <td>Shipping (excl. VAT)</td>
+                    <td class="num" id="checkout-shipping"></td>
+                </tr>
+                <tr>
+                    <td>BTW</td>
+                    <td class="num" id="checkout-vat"></td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td>Total to pay (incl. VAT)</td>
+                    <td class="num" id="checkout-total"></td>
+                </tr>
+                </tfoot>
+            </table>
+            <h3>Contact</h3>
             <label for="email">Email</label>
             <input id="email" type="email" autocomplete="email">
             <div class="field-error" id="email-error"></div>
             <label for="email2">Confirm email</label>
             <input id="email2" type="email" autocomplete="off">
             <div class="field-error" id="email2-error"></div>
-            <p class="muted">Delivery to Poland by email, no shipping costs.</p>
+            <p class="muted" id="delivery-note"></p>
+            <div id="shipping-address" hidden>
+                <h3>Shipping address</h3>
+                <label for="shipName">Full name</label>
+                <input id="shipName" type="text" autocomplete="name">
+                <div class="field-error" id="shipName-error"></div>
+                <label for="shipStreet">Street and house number</label>
+                <input id="shipStreet" type="text" autocomplete="address-line1">
+                <div class="field-error" id="shipStreet-error"></div>
+                <div class="card-row">
+                    <div>
+                        <label for="shipPostal">Postal code</label>
+                        <input id="shipPostal" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="00-000" maxlength="6">
+                        <div class="field-error" id="shipPostal-error"></div>
+                    </div>
+                    <div>
+                        <label for="shipCity">City</label>
+                        <input id="shipCity" type="text" autocomplete="address-level2">
+                        <div class="field-error" id="shipCity-error"></div>
+                    </div>
+                </div>
+                <p class="muted">Country: Poland</p>
+            </div>
             <h3>Payment</h3>
             <label for="cardName">Name on card</label>
             <input id="cardName" type="text" autocomplete="cc-name">
@@ -317,13 +361,17 @@
 
         <div id="summary" hidden>
             <h2>Order <span id="order-ref"></span></h2>
-            <p class="muted">Sent to <strong id="order-email"></strong>, no shipping costs.</p>
+            <p class="muted" id="order-delivery"></p>
             <table>
                 <tbody id="order-lines"></tbody>
                 <tfoot>
                 <tr>
                     <td>Subtotal (excl. VAT)</td>
                     <td class="num" id="order-subtotal"></td>
+                </tr>
+                <tr id="order-shipping-row">
+                    <td>Shipping (excl. VAT)</td>
+                    <td class="num" id="order-shipping"></td>
                 </tr>
                 <tr>
                     <td>BTW</td>
@@ -431,8 +479,17 @@
     const cardNumberInput = document.getElementById('cardNumber');
     const cardExpiryInput = document.getElementById('cardExpiry');
     const cardCvcInput = document.getElementById('cardCvc');
-    const fieldInputs = [emailInput, email2Input, cardNameInput, cardNumberInput, cardExpiryInput, cardCvcInput];
+    const addressBlock = document.getElementById('shipping-address');
+    const shipNameInput = document.getElementById('shipName');
+    const shipStreetInput = document.getElementById('shipStreet');
+    const shipPostalInput = document.getElementById('shipPostal');
+    const shipCityInput = document.getElementById('shipCity');
+    const fieldInputs = [emailInput, email2Input, cardNameInput, cardNumberInput, cardExpiryInput, cardCvcInput,
+        shipNameInput, shipStreetInput, shipPostalInput, shipCityInput];
     const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const POSTAL = /^\d{2}-\d{3}$/;
+    // Whether the current cart holds physical products; set when the checkout step opens.
+    let shippingRequired = false;
 
     function luhnValid(digits) {
         let sum = 0;
@@ -484,6 +541,13 @@
             cardExpiry: cardExpiryProblem(),
             cardCvc: cardCvcInput.value.trim().length === 3 ? '' : 'Please enter a valid CVC.'
         };
+        // The address is only asked for, and only validated, when something has to be shipped.
+        if (shippingRequired) {
+            problems.shipName = shipNameInput.value.trim() ? '' : 'Please enter the recipient name.';
+            problems.shipStreet = shipStreetInput.value.trim() ? '' : 'Please enter the street and house number.';
+            problems.shipPostal = POSTAL.test(shipPostalInput.value.trim()) ? '' : 'Please enter a postal code like 00-000.';
+            problems.shipCity = shipCityInput.value.trim() ? '' : 'Please enter the city.';
+        }
         for (const [field, message] of Object.entries(problems)) {
             const show = showAll || document.getElementById(field).dataset.touched;
             document.getElementById(`${field}-error`).textContent = show ? message : '';
@@ -493,12 +557,19 @@
         return valid;
     }
 
-    for (const input of [emailInput, email2Input]) {
+    for (const input of [emailInput, email2Input, shipNameInput, shipStreetInput, shipCityInput]) {
         input.addEventListener('input', () => {
             input.dataset.touched = 'true';
             validate(false);
         });
     }
+
+    shipPostalInput.addEventListener('input', () => {
+        const digits = shipPostalInput.value.replace(/\D/g, '').slice(0, 5);
+        shipPostalInput.value = digits.length > 2 ? `${digits.slice(0, 2)}-${digits.slice(2)}` : digits;
+        shipPostalInput.dataset.touched = 'true';
+        validate(false);
+    });
 
     cardNameInput.addEventListener('input', () => {
         cardNameInput.dataset.touched = 'true';
@@ -533,7 +604,18 @@
             errorEl.textContent = 'Your cart is empty.';
             return;
         }
-        document.getElementById('checkout-total').textContent = money.format(cart.subtotalInclVAT);
+        shippingRequired = cart.shippingRequired;
+        addressBlock.hidden = !shippingRequired;
+        document.getElementById('delivery-note').textContent = shippingRequired
+            ? 'Delivery to Poland. E-books are sent by email, other products are shipped to the address below.'
+            : 'Delivery to Poland by email, no shipping costs.';
+        document.getElementById('checkout-subtotal').textContent = money.format(cart.subtotal);
+        const shippingRow = document.getElementById('checkout-shipping-row');
+        shippingRow.hidden = !shippingRequired;
+        document.getElementById('checkout-shipping').textContent =
+            `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
+        document.getElementById('checkout-vat').textContent = money.format(cart.orderVat);
+        document.getElementById('checkout-total').textContent = money.format(cart.orderTotal);
         showStep('checkout');
         validate(false);
         emailInput.focus();
@@ -547,20 +629,39 @@
             return;
         }
         const terms = await api('/api/terms');
-        const order = await api('/api/orders', {
-            method: 'POST',
-            body: JSON.stringify({
-                email: emailInput.value.trim(),
-                acceptedTermsVersion: terms.version
-            })
-        });
+        const request = {
+            email: emailInput.value.trim(),
+            acceptedTermsVersion: terms.version
+        };
+        if (shippingRequired) {
+            request.shippingAddress = {
+                fullName: shipNameInput.value.trim(),
+                street: shipStreetInput.value.trim(),
+                postalCode: shipPostalInput.value.trim(),
+                city: shipCityInput.value.trim()
+            };
+        }
+        const order = await api('/api/orders', {method: 'POST', body: JSON.stringify(request)});
         renderCart(await api('/api/cart'));
         showSummary(order);
     };
 
     function showSummary(order) {
         document.getElementById('order-ref').textContent = order.reference;
-        document.getElementById('order-email').textContent = order.email;
+        const delivery = document.getElementById('order-delivery');
+        delivery.textContent = '';
+        const address = order.shippingAddress;
+        if (address) {
+            delivery.append('Shipped to ');
+            const strong = document.createElement('strong');
+            strong.textContent = `${address.fullName}, ${address.street}, ${address.postalCode} ${address.city}, Poland`;
+            delivery.append(strong, '. Confirmation sent to ');
+        } else {
+            delivery.append('Sent to ');
+        }
+        const emailStrong = document.createElement('strong');
+        emailStrong.textContent = order.email;
+        delivery.append(emailStrong, address ? '.' : ', no shipping costs.');
         const tbody = document.getElementById('order-lines');
         tbody.innerHTML = '';
         for (const line of order.lines) {
@@ -571,6 +672,10 @@
             total.textContent = money.format(line.lineTotal);
         }
         document.getElementById('order-subtotal').textContent = money.format(order.subtotal);
+        const hasShipping = Number(order.shipping) > 0;
+        document.getElementById('order-shipping-row').hidden = !hasShipping;
+        document.getElementById('order-shipping').textContent =
+            `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
         document.getElementById('order-vat').textContent = money.format(order.vat);
         document.getElementById('order-total').textContent = money.format(order.total);
         form.reset();
