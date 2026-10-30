@@ -1,7 +1,6 @@
 package nl.group9.eurocart.catalogue;
 
 import java.math.BigDecimal;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,29 +16,21 @@ class ProductCatalogueTest {
 	private final ProductCatalogue catalogue = new ProductCatalogue(new ObjectMapper());
 
 	@Test
-	void containsFiftyOneProductsWithUniqueIds() {
+	void listsOnlyTenEbooksWithUniqueIds() {
 		List<Product> products = catalogue.all();
 
-		assertThat(products).hasSize(51);
+		assertThat(products).hasSize(10);
+		assertThat(products).extracting(Product::category).containsOnly(Category.EBOOK);
 		assertThat(products).extracting(Product::id).doesNotHaveDuplicates();
 	}
 
 	@Test
-	void hasTenProductsPerCategoryPlusTheFluteSheetMusic() {
-		for (Category category : Category.values()) {
-			assertThat(catalogue.all()).filteredOn(p -> p.category() == category)
-					.as("products in category %s", category)
-					.hasSize(category == Category.BOOK ? 11 : 10);
-		}
-	}
-
-	@Test
-	void coversAllSixCountries() {
+	void ebooksAreAllDutch() {
 		Set<Country> countries = catalogue.all().stream()
 				.map(Product::countryOfOrigin)
 				.collect(Collectors.toSet());
 
-		assertThat(countries).containsExactlyInAnyOrderElementsOf(EnumSet.allOf(Country.class));
+		assertThat(countries).containsExactly(Country.NL);
 	}
 
 	@Test

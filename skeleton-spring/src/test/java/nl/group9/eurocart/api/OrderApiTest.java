@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class OrderApiTest {
 
-	private static final String VALID = "{\"email\":\"anna@example.pl\"}";
+	private static final String VALID = "{\"email\":\"anna@example.pl\",\"acceptedTermsVersion\":\"2026-10-v1\"}";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -82,8 +82,37 @@ class OrderApiTest {
 	void invalidEmailGivesBadRequest() throws Exception {
 		cartService.add("EBK-001", 1);
 		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"email\":\"not-an-email\"}"))
+				.content("{\"email\":\"not-an-email\",\"acceptedTermsVersion\":\"2026-10-v1\"}"))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void orderStoresAcceptedTermsVersionAndTimestamps() throws Exception {
+		cartService.add("EBK-001", 1);
+		mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(VALID))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.termsVersion").value("2026-10-v1"))
+				.andExpect(jsonPath("$.termsAcceptedAt").isNotEmpty());
+	}
+
+	@Test
+	void missingOrWrongTermsVersionGivesBadRequestAndKeepsCart() throws Exception {
+		cartService.add("EBK-001", 1);
+		for (String body : new String[] {
+				"{\"email\":\"anna@example.pl\"}",
+				"{\"email\":\"anna@example.pl\",\"acceptedTermsVersion\":\"1999-01-v0\"}" }) {
+			mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(body))
+					.andExpect(status().isBadRequest());
+		}
+		mockMvc.perform(get("/api/cart")).andExpect(jsonPath("$.lines.length()").value(1));
+	}
+
+	@Test
+	void exposesCurrentTermsVersion() throws Exception {
+		mockMvc.perform(get("/api/terms"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.version").value("2026-10-v1"))
+				.andExpect(jsonPath("$.url").value("/terms.html"));
 	}
 
 	@Test

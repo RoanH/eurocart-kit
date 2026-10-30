@@ -2,7 +2,7 @@
 
 What is built against [slices-checkout.md](./slices-checkout.md). Update this file when a slice lands.
 
-## Done: Theme 1 (slices 1.1–1.3), plus a placeholder for 2.2
+## Done: Theme 1 (slices 1.1–1.3)
 
 Commit `93b606d`. Scope: e-books, Poland only (PLN, PL VAT), guest checkout, everything in memory.
 
@@ -18,13 +18,16 @@ Commit `93b606d`. Scope: e-books, Poland only (PLN, PL VAT), guest checkout, eve
 - Checkout step: email + confirm email (format and match checked client-side, errors only after touching a field), an unticked "I accept the Terms & Conditions" checkbox, and **Place order**, which is disabled until the emails are valid and the box is ticked.
 - Summary step: order reference, delivery email, lines, subtotal (VAT base), BTW, total in PLN, "no shipping costs" note, **Continue shopping**.
 
+## Done: Theme 2 (slices 2.1–2.2; 2.3 removed for now)
+- `static/terms.html`: versioned T&C text (`2026-10-v1`) for e-books in Poland. Seller details are placeholders to complete before go-live. Linked from the checkout checkbox (opens in a new tab).
+- `order/Terms.CURRENT_VERSION` holds the version; `GET /api/terms` returns `{version, url}` and the front-end sends that version on submit.
+- `POST /api/orders` body is now `{email, acceptedTermsVersion}`. A missing or non-current version → 400. `Order` stores `termsVersion` and `termsAcceptedAt`.
+- Slice 2.3 (withdrawal-waiver checkbox and consent) was built and then removed again on request; still to confirm with Compliance.
+- Tests: new cases in `api/OrderApiTest`.
+
 ## Deviations from slices-checkout.md
 - **No name field.** The product owner does not need the customer's name; the form, the API request and `Order` carry only `email`. Slices 1.1/1.2 still say "name and email".
-- **T&C checkbox is UI-only for now.** It is a stand-in for slice 2.2: no `acceptedTermsVersion`, no `termsVersion`/`termsAcceptedAt` on the order, no backend enforcement, no link to a terms page (2.1 not built).
 - Slice 1.3 has no "Pay now" button (that arrives with 3.1).
 
 ## Not done yet
-Themes 2–4: terms page (2.1), backend-enforced acceptance with version and timestamp (2.2), withdrawal-waiver consent (2.3, to confirm with Compliance), payment screen and payment endpoint (3.x), outbox, no-delivery-before-payment and download links (4.x).
-
-## Known pre-existing test failures (not caused by this work)
-The catalogue only exposes EBOOK products (`ProductCatalogue.all()`), but these tests still expect all 51 products: `CartApiTest.listsAllProducts`, `ProductCatalogueTest.containsFiftyOneProductsWithUniqueIds`, `.coversAllSixCountries`, `.hasTenProductsPerCategoryPlusTheFluteSheetMusic`.
+Themes 3–4: payment screen and payment endpoint (3.x), outbox, no-delivery-before-payment and download links (4.x).

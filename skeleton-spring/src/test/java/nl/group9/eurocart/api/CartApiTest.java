@@ -33,12 +33,12 @@ class CartApiTest {
 	}
 
 	@Test
-	void listsAllProducts() throws Exception {
+	void listsOnlyEbooks() throws Exception {
 		mockMvc.perform(get("/api/products"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(51))
-				.andExpect(jsonPath("$[0].id").value("LAP-001"))
-				.andExpect(jsonPath("$[0].price").value(3908.70));
+				.andExpect(jsonPath("$.length()").value(10))
+				.andExpect(jsonPath("$[0].id").value("EBK-001"))
+				.andExpect(jsonPath("$[0].price").value(39.09));
 	}
 
 	@Test

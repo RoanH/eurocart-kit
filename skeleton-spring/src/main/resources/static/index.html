@@ -282,7 +282,7 @@
             <input id="email2" type="email" autocomplete="off">
             <div class="field-error" id="email2-error"></div>
             <p class="muted">Delivery to Poland by email, no shipping costs.</p>
-            <label class="check"><input type="checkbox" id="terms"> I accept the Terms &amp; Conditions</label>
+            <label class="check"><input type="checkbox" id="terms"> <span>I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></span></label>
             <p>
                 <button type="submit" id="place-order" class="primary" disabled>Place order</button>
                 <button type="button" id="back-to-cart">Back</button>
@@ -454,9 +454,13 @@
         if (!validate(true) || !termsInput.checked) {
             return;
         }
+        const terms = await api('/api/terms');
         const order = await api('/api/orders', {
             method: 'POST',
-            body: JSON.stringify({email: emailInput.value.trim()})
+            body: JSON.stringify({
+                email: emailInput.value.trim(),
+                acceptedTermsVersion: terms.version
+            })
         });
         renderCart(await api('/api/cart'));
         showSummary(order);
