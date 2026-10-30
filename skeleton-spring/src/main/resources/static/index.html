@@ -7,182 +7,402 @@
     <style>
         :root {
             color-scheme: light;
-            --paper: #f3f0e8;
-            --panel: #fffdf7;
-            --ink: #171717;
-            --muted: #6b6962;
-            --line: #c9c5bb;
-            --orange: #ff5a1f;
-            --yellow: #f5d547;
-            --cyan: #62d6df;
-            --blue: #2878c8;
-            --green: #23845b;
+            --cream: #fff8ef;
+            --card: #ffffff;
+            --ink: #2b2a4c;
+            --muted: #6c6a8a;
+            --line: #ece4f5;
+            --coral: #ff6b6b;
+            --coral-dark: #e24e4e;
+            --mint: #c9f2e0;
+            --mint-ink: #146b4b;
+            --lavender: #e9e2ff;
+            --violet: #7b5cff;
+            --sun: #ffe27a;
+            --peach: #ffe3d6;
+            --error: #c0392b;
+            --radius: 18px;
+            --shadow: 0 6px 18px rgba(80, 60, 140, .12);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: system-ui, sans-serif;
+            font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
             margin: 0;
-            padding: 1rem;
-            background: var(--paper);
+            padding: 1rem 1rem 6rem;
+            background: var(--cream);
             color: var(--ink);
+            line-height: 1.4;
+        }
+
+        header.top {
+            max-width: 1100px;
+            margin: 0 auto 1rem;
         }
 
         h1 {
-            margin: 0 0 1rem;
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: -.01em;
             display: inline-block;
-            padding: .2rem .55rem;
-            background: var(--orange);
-            border: 2px solid var(--ink);
-            font-size: 1.8rem;
-            letter-spacing: .04em;
-            text-transform: uppercase;
+            padding: .15rem .8rem;
+            background: var(--sun);
+            border-radius: 999px;
+            transform: rotate(-1.5deg);
+        }
+
+        .tagline {
+            margin: .4rem 0 0;
+            color: var(--muted);
         }
 
         main {
+            max-width: 1100px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            grid-template-columns: 1fr 380px;
+            gap: 1.25rem;
+            align-items: start;
         }
 
-        @media (max-width: 800px) {
+        @media (max-width: 860px) {
             main {
                 grid-template-columns: 1fr;
             }
         }
 
         section {
-            background: var(--panel);
-            border: 2px solid var(--ink);
-            padding: 1rem;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.25rem;
+        }
+
+        aside#cart-panel {
+            position: sticky;
+            top: 1rem;
+        }
+
+        @media (max-width: 860px) {
+            aside#cart-panel {
+                position: static;
+            }
         }
 
         h2 {
-            margin: 0 0 .5rem;
-            font-size: 1.1rem;
-            border-left: 6px solid var(--cyan);
-            padding-left: .5rem;
+            margin: 0 0 .25rem;
+            font-size: 1.25rem;
         }
 
         h3 {
-            margin: 1rem 0 .25rem;
-            font-size: .9rem;
+            margin: 1.1rem 0 .5rem;
+            font-size: .85rem;
+            letter-spacing: .06em;
             text-transform: uppercase;
-            display: table;
-            padding: .15rem .4rem;
-            color: var(--ink);
-            background: var(--yellow);
-            border-left: 4px solid var(--orange);
+            color: var(--violet);
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: .9rem;
         }
 
-        thead th {
-            color: var(--panel);
-            background: var(--ink);
-            border-bottom: 2px solid var(--cyan);
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin: .8rem 0 1rem;
         }
 
-        td, th {
-            padding: .3rem .4rem;
-            text-align: left;
-            border-bottom: 1px solid var(--line);
+        .chip {
+            background: var(--lavender);
+            padding: .4rem .9rem;
         }
 
-        tbody tr:hover {
-            background: #e4f7f5;
+        .chip[aria-pressed=true] {
+            background: var(--violet);
+            color: #fff;
         }
 
-        .product-table tbody tr:nth-child(even) {
-            background: #edf4fa;
+        .card {
+            display: flex;
+            flex-direction: column;
+            gap: .4rem;
+            padding: .9rem;
+            border-radius: var(--radius);
+            background: var(--lavender);
+            transition: transform .15s ease, box-shadow .15s ease;
         }
 
-        .product-table tbody tr:nth-child(even):hover {
-            background: #d9f2f1;
+        .card:nth-child(4n + 2) {
+            background: var(--peach);
         }
 
-        td.num, th.num {
-            text-align: right;
-            white-space: nowrap;
+        .card:nth-child(4n + 3) {
+            background: var(--mint);
+        }
+
+        .card:nth-child(4n) {
+            background: #fff3c4;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .card.in-cart {
+            outline: 3px solid var(--violet);
+        }
+
+        .card .title {
+            font-weight: 800;
+            flex: 1;
+        }
+
+        .card .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .price {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .pill {
+            font-size: .75rem;
+            font-weight: 700;
+            padding: .1rem .5rem;
+            background: rgba(255, 255, 255, .7);
+            border-radius: 999px;
         }
 
         button {
             cursor: pointer;
-            border: 1px solid var(--ink);
-            background: var(--panel);
+            border: 0;
+            border-radius: 999px;
+            background: var(--lavender);
             color: var(--ink);
-            padding: .3rem .65rem;
+            padding: .55rem 1.1rem;
             font: inherit;
-            font-size: .85rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            font-weight: 800;
+            transition: transform .1s ease, background .15s ease;
         }
 
         button:hover {
-            background: var(--yellow);
+            transform: scale(1.05);
         }
 
-        .product-table button {
-            border-color: var(--blue);
-            background: var(--cyan);
-        }
-
-        .product-table button:hover {
-            background: var(--yellow);
+        button:active {
+            transform: scale(.96);
         }
 
         button.primary {
-            background: var(--orange);
+            background: var(--coral);
+            color: #fff;
+            padding: .8rem 1.4rem;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 0 var(--coral-dark);
         }
 
-        button:disabled {
-            opacity: .5;
+        button.primary:hover {
+            background: var(--coral-dark);
+        }
+
+        button.primary:disabled {
+            background: #d9d4e6;
+            box-shadow: 0 4px 0 #bfb8d3;
+            color: #fff;
             cursor: not-allowed;
+            transform: none;
         }
 
-        button.primary:disabled:hover {
-            background: var(--orange);
+        button.add {
+            background: var(--ink);
+            color: #fff;
+        }
+
+        button.add:hover {
+            background: var(--violet);
+        }
+
+        button.link {
+            background: none;
+            padding: .2rem .4rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        button:focus-visible, a:focus-visible, input:focus-visible {
+            outline: 3px solid var(--violet);
+            outline-offset: 2px;
+        }
+
+        .stepper {
+            display: inline-flex;
+            align-items: center;
+            gap: .2rem;
+            background: #fff;
+            border-radius: 999px;
+            padding: .15rem;
+        }
+
+        .stepper button {
+            width: 2rem;
+            height: 2rem;
+            padding: 0;
+            background: var(--violet);
+            color: #fff;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .stepper span {
+            min-width: 1.6rem;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .cart-line {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: .2rem .6rem;
+            align-items: center;
+            padding: .6rem 0;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .cart-line .name {
+            font-weight: 700;
+        }
+
+        .cart-line .total {
+            text-align: right;
+            font-weight: 800;
+        }
+
+        .totals {
+            margin: .8rem 0;
+            padding: .8rem 1rem;
+            background: var(--cream);
+            border-radius: 14px;
+        }
+
+        .totals div {
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+        }
+
+        .totals div.grand {
+            margin-top: .3rem;
+            padding-top: .4rem;
+            border-top: 2px dashed var(--line);
+            color: var(--ink);
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 1.5rem .5rem;
+            color: var(--muted);
+        }
+
+        .nudge {
+            margin: .8rem 0;
+            padding: .6rem .9rem;
+            border-radius: 14px;
+            background: var(--sun);
+            font-weight: 700;
+        }
+
+        .suggestions {
+            margin-top: 1rem;
+        }
+
+        .suggestion {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .6rem;
+            padding: .45rem .7rem;
+            margin-bottom: .4rem;
+            border-radius: 14px;
+            background: var(--mint);
+        }
+
+        .suggestion .name {
+            font-weight: 700;
+            font-size: .9rem;
+        }
+
+        .suggestion .muted {
+            display: block;
+        }
+
+        .suggestion button {
+            padding: .35rem .8rem;
+            white-space: nowrap;
+            background: #fff;
+        }
+
+        .suggestion button:hover {
+            background: var(--violet);
+            color: #fff;
         }
 
         form label {
             display: block;
-            margin: .6rem 0 .2rem;
+            margin: .7rem 0 .2rem;
             font-weight: 700;
-            font-size: .85rem;
-            text-transform: uppercase;
+            font-size: .9rem;
         }
 
         form label.check {
             display: flex;
             gap: .5rem;
             align-items: center;
-            text-transform: none;
             font-size: 1rem;
             cursor: pointer;
+            margin: 1rem 0;
         }
 
         form input[type=checkbox] {
-            width: auto;
+            width: 1.2rem;
+            height: 1.2rem;
+            accent-color: var(--violet);
         }
 
         form input:not([type=checkbox]) {
             width: 100%;
-            box-sizing: border-box;
-            padding: .4rem;
-            border: 1px solid var(--ink);
+            padding: .65rem .8rem;
+            border: 2px solid var(--line);
+            border-radius: 12px;
             font: inherit;
             background: #fff;
+            color: var(--ink);
         }
 
-        form input[readonly] {
-            background: var(--paper);
-            color: var(--muted);
+        form input:not([type=checkbox]):focus {
+            border-color: var(--violet);
+            outline: none;
+        }
+
+        a {
+            color: var(--violet);
+            font-weight: 700;
         }
 
         .field-error {
-            color: #a32112;
+            color: var(--error);
             font-size: .85rem;
             min-height: 1.1em;
         }
@@ -193,26 +413,15 @@
             gap: 1rem;
         }
 
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: .8rem;
+            flex-wrap: wrap;
+        }
+
         [hidden] {
             display: none !important;
-        }
-
-        button:focus-visible {
-            outline: 3px solid var(--orange);
-            outline-offset: 2px;
-        }
-
-        tfoot td {
-            font-weight: bold;
-            border-top: 2px solid var(--ink);
-        }
-
-        tfoot tr:nth-child(2) {
-            background: #fff4bd;
-        }
-
-        tfoot tr:last-child {
-            background: #ffe0d2;
         }
 
         .muted {
@@ -221,177 +430,216 @@
         }
 
         #error {
-            color: #a32112;
+            max-width: 1100px;
+            margin: 0 auto .8rem;
+            color: var(--error);
+            font-weight: 700;
             min-height: 1.2em;
         }
 
-        .success {
-            color: var(--green);
-            font-weight: bold;
-            min-height: 1.2em;
+        .success-banner {
+            padding: .7rem 1rem;
+            border-radius: 14px;
+            background: var(--mint);
+            color: var(--mint-ink);
+            font-weight: 800;
+        }
+
+        .order-line {
+            display: flex;
+            justify-content: space-between;
+            padding: .35rem 0;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .cart-bar {
+            display: none;
+        }
+
+        @media (max-width: 860px) {
+            .cart-bar {
+                display: flex;
+                position: fixed;
+                left: .8rem;
+                right: .8rem;
+                bottom: .8rem;
+                z-index: 10;
+                justify-content: space-between;
+                align-items: center;
+                padding: .7rem 1rem;
+                border-radius: 999px;
+                background: var(--ink);
+                color: #fff;
+                box-shadow: var(--shadow);
+                font-weight: 800;
+            }
+
+            .cart-bar button {
+                background: var(--coral);
+                color: #fff;
+                padding: .45rem 1rem;
+            }
+        }
+
+        .bump {
+            animation: bump .35s ease;
+        }
+
+        @keyframes bump {
+            40% {
+                transform: scale(1.12);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
 <body>
-<h1>EuroCart</h1>
-<p id="error"></p>
+<header class="top">
+    <h1>EuroCart</h1>
+    <p class="tagline">Pick it, love it, get it. 🛍️</p>
+</header>
+<p id="error" role="alert"></p>
 <main>
-    <section>
-        <h2>Products</h2>
+    <section aria-labelledby="products-title">
+        <h2 id="products-title">Pick your favourites</h2>
         <p class="muted">Prices in PLN, excluding VAT and shipping.</p>
-        <div id="products"></div>
+        <div id="category-chips" class="chips" role="group" aria-label="Filter by category"></div>
+        <div id="products" class="product-grid"></div>
     </section>
-    <section>
-        <div id="cart-view">
-            <h2>Cart</h2>
-            <table>
-                <thead>
-                <tr>
-                    <th>Product</th>
-                    <th class="num">Qty</th>
-                    <th class="num">Line total</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="cart-lines"></tbody>
-                <tfoot>
-                <tr>
-                    <td>Subtotal (excl. VAT)</td>
-                    <td></td>
-                    <td class="num" id="subtotal">0,00 zł</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>BTW</td>
-                    <td></td>
-                    <td class="num" id="vat">0,00 zł</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Total (incl. VAT)</td>
-                    <td></td>
-                    <td class="num" id="subtotalInclVAT">0,00 zł</td>
-                    <td></td>
-                </tr>
-                </tfoot>
-            </table>
-            <p><button id="checkout-btn" class="primary">Checkout</button></p>
-        </div>
 
-        <form id="checkout-form" novalidate hidden>
-            <h2>Checkout</h2>
-            <table>
-                <tbody>
-                <tr>
-                    <td>Subtotal (excl. VAT)</td>
-                    <td class="num" id="checkout-subtotal"></td>
-                </tr>
-                <tr id="checkout-shipping-row">
-                    <td>Shipping (excl. VAT)</td>
-                    <td class="num" id="checkout-shipping"></td>
-                </tr>
-                <tr>
-                    <td>BTW</td>
-                    <td class="num" id="checkout-vat"></td>
-                </tr>
-                </tbody>
-                <tfoot>
-                <tr>
-                    <td>Total to pay (incl. VAT)</td>
-                    <td class="num" id="checkout-total"></td>
-                </tr>
-                </tfoot>
-            </table>
-            <h3>Contact</h3>
-            <label for="email">Email</label>
-            <input id="email" type="email" autocomplete="email">
-            <div class="field-error" id="email-error"></div>
-            <label for="email2">Confirm email</label>
-            <input id="email2" type="email" autocomplete="off">
-            <div class="field-error" id="email2-error"></div>
-            <p class="muted" id="delivery-note"></p>
-            <div id="shipping-address" hidden>
-                <h3>Shipping address</h3>
-                <label for="shipName">Full name</label>
-                <input id="shipName" type="text" autocomplete="name">
-                <div class="field-error" id="shipName-error"></div>
-                <label for="shipStreet">Street and house number</label>
-                <input id="shipStreet" type="text" autocomplete="address-line1">
-                <div class="field-error" id="shipStreet-error"></div>
+    <aside id="cart-panel">
+        <section>
+            <div id="cart-view">
+                <h2>Your cart</h2>
+                <div id="cart-lines"></div>
+                <div id="nudge" class="nudge" hidden></div>
+                <div class="totals" id="totals">
+                    <div><span>Subtotal (excl. VAT)</span><span id="subtotal">0,00 zł</span></div>
+                    <div><span>BTW</span><span id="vat">0,00 zł</span></div>
+                    <div class="grand"><span>Total</span><span id="subtotalInclVAT">0,00 zł</span></div>
+                </div>
+                <button id="checkout-btn" class="primary" style="width:100%">Checkout</button>
+                <div class="suggestions" id="suggestions" hidden>
+                    <h3>You might also like</h3>
+                    <div id="suggestion-list"></div>
+                </div>
+            </div>
+
+            <form id="checkout-form" novalidate hidden>
+                <h2>Almost yours! 🎉</h2>
+                <div class="totals">
+                    <div><span>Subtotal (excl. VAT)</span><span id="checkout-subtotal"></span></div>
+                    <div id="checkout-shipping-row"><span>Shipping (excl. VAT)</span><span id="checkout-shipping"></span></div>
+                    <div><span>BTW</span><span id="checkout-vat"></span></div>
+                    <div class="grand"><span>Total to pay</span><span id="checkout-total"></span></div>
+                </div>
+                <h3>Contact</h3>
+                <label for="email">Email</label>
+                <input id="email" type="email" autocomplete="email">
+                <div class="field-error" id="email-error"></div>
+                <label for="email2">Confirm email</label>
+                <input id="email2" type="email" autocomplete="off">
+                <div class="field-error" id="email2-error"></div>
+                <p class="muted" id="delivery-note"></p>
+                <div id="shipping-address" hidden>
+                    <h3>Shipping address</h3>
+                    <label for="shipName">Full name</label>
+                    <input id="shipName" type="text" autocomplete="name">
+                    <div class="field-error" id="shipName-error"></div>
+                    <label for="shipStreet">Street and house number</label>
+                    <input id="shipStreet" type="text" autocomplete="address-line1">
+                    <div class="field-error" id="shipStreet-error"></div>
+                    <div class="card-row">
+                        <div>
+                            <label for="shipPostal">Postal code</label>
+                            <input id="shipPostal" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="00-000" maxlength="6">
+                            <div class="field-error" id="shipPostal-error"></div>
+                        </div>
+                        <div>
+                            <label for="shipCity">City</label>
+                            <input id="shipCity" type="text" autocomplete="address-level2">
+                            <div class="field-error" id="shipCity-error"></div>
+                        </div>
+                    </div>
+                    <p class="muted">Country: Poland</p>
+                </div>
+                <h3>Payment</h3>
+                <label for="cardName">Name on card</label>
+                <input id="cardName" type="text" autocomplete="cc-name">
+                <div class="field-error" id="cardName-error"></div>
+                <label for="cardNumber">Card number</label>
+                <input id="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="23">
+                <div class="field-error" id="cardNumber-error"></div>
                 <div class="card-row">
                     <div>
-                        <label for="shipPostal">Postal code</label>
-                        <input id="shipPostal" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="00-000" maxlength="6">
-                        <div class="field-error" id="shipPostal-error"></div>
+                        <label for="cardExpiry">Expiry (MM/YY)</label>
+                        <input id="cardExpiry" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5">
+                        <div class="field-error" id="cardExpiry-error"></div>
                     </div>
                     <div>
-                        <label for="shipCity">City</label>
-                        <input id="shipCity" type="text" autocomplete="address-level2">
-                        <div class="field-error" id="shipCity-error"></div>
+                        <label for="cardCvc">CVC</label>
+                        <input id="cardCvc" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4">
+                        <div class="field-error" id="cardCvc-error"></div>
                     </div>
                 </div>
-                <p class="muted">Country: Poland</p>
-            </div>
-            <h3>Payment</h3>
-            <label for="cardName">Name on card</label>
-            <input id="cardName" type="text" autocomplete="cc-name">
-            <div class="field-error" id="cardName-error"></div>
-            <label for="cardNumber">Card number</label>
-            <input id="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="23">
-            <div class="field-error" id="cardNumber-error"></div>
-            <div class="card-row">
-                <div>
-                    <label for="cardExpiry">Expiry (MM/YY)</label>
-                    <input id="cardExpiry" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5">
-                    <div class="field-error" id="cardExpiry-error"></div>
+                <p class="muted">Card details are only checked in your browser and are never sent to or stored by the server.</p>
+                <label class="check"><input type="checkbox" id="terms"> <span>I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></span></label>
+                <div class="actions">
+                    <button type="submit" id="place-order" class="primary" disabled>Place order</button>
+                    <button type="button" id="back-to-cart" class="link">← Back</button>
                 </div>
-                <div>
-                    <label for="cardCvc">CVC</label>
-                    <input id="cardCvc" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4">
-                    <div class="field-error" id="cardCvc-error"></div>
-                </div>
-            </div>
-            <p class="muted">Card details are only checked in your browser and are never sent to or stored by the server.</p>
-            <label class="check"><input type="checkbox" id="terms"> <span>I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></span></label>
-            <p>
-                <button type="submit" id="place-order" class="primary" disabled>Place order</button>
-                <button type="button" id="back-to-cart">Back</button>
-            </p>
-        </form>
+            </form>
 
-        <div id="summary" hidden>
-            <h2>Order <span id="order-ref"></span></h2>
-            <p class="muted" id="order-delivery"></p>
-            <table>
-                <tbody id="order-lines"></tbody>
-                <tfoot>
-                <tr>
-                    <td>Subtotal (excl. VAT)</td>
-                    <td class="num" id="order-subtotal"></td>
-                </tr>
-                <tr id="order-shipping-row">
-                    <td>Shipping (excl. VAT)</td>
-                    <td class="num" id="order-shipping"></td>
-                </tr>
-                <tr>
-                    <td>BTW</td>
-                    <td class="num" id="order-vat"></td>
-                </tr>
-                <tr>
-                    <td>Total</td>
-                    <td class="num" id="order-total"></td>
-                </tr>
-                </tfoot>
-            </table>
-            <p><button id="new-order">Continue shopping</button></p>
-        </div>
-    </section>
+            <div id="summary" hidden>
+                <p class="success-banner">🎉 Thanks! Your order is on its way.</p>
+                <h2>Order <span id="order-ref"></span></h2>
+                <p class="muted" id="order-delivery"></p>
+                <div id="order-lines"></div>
+                <div class="totals">
+                    <div><span>Subtotal (excl. VAT)</span><span id="order-subtotal"></span></div>
+                    <div id="order-shipping-row"><span>Shipping (excl. VAT)</span><span id="order-shipping"></span></div>
+                    <div><span>BTW</span><span id="order-vat"></span></div>
+                    <div class="grand"><span>Total</span><span id="order-total"></span></div>
+                </div>
+                <div class="suggestions" id="after-suggestions" hidden>
+                    <h3>Keep shopping</h3>
+                    <div id="after-suggestion-list"></div>
+                </div>
+                <p><button id="new-order" class="primary">Continue shopping</button></p>
+            </div>
+        </section>
+    </aside>
 </main>
+
+<div class="cart-bar" id="cart-bar">
+    <span id="cart-bar-text">Cart is empty</span>
+    <button id="cart-bar-btn">View cart</button>
+</div>
 
 <script>
     const money = new Intl.NumberFormat('pl-PL', {style: 'currency', currency: 'PLN'});
     const percent = new Intl.NumberFormat('nl-NL', {style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: 1});
     const errorEl = document.getElementById('error');
+    const FLAGS = {NL: '🇳🇱', DE: '🇩🇪', FR: '🇫🇷', PL: '🇵🇱', CH: '🇨🇭', GB: '🇬🇧'};
+    const NUDGE_THRESHOLD = 3;
+
+    const CATEGORIES = {
+        LAPTOP: '💻 Laptops',
+        BOOK: '📖 Books',
+        FOOD: '🍎 Food',
+        MEDICINE: '💊 Medicine',
+        EBOOK: '📱 E-books'
+    };
+
+    let products = [];
+    let activeCategory = 'ALL';
+    let currentCart = {lines: [], subtotal: 0, vat: 0, subtotalInclVAT: 0};
 
     async function api(path, options) {
         errorEl.textContent = '';
@@ -404,68 +652,160 @@
         return body;
     }
 
-    function renderProducts(products) {
-        const byCategory = Map.groupBy(products, p => p.category);
-        const container = document.getElementById('products');
-        container.innerHTML = '';
-        for (const [category, items] of byCategory) {
-            const heading = document.createElement('h3');
-            heading.textContent = category;
-            container.appendChild(heading);
-            const table = document.createElement('table');
-            table.className = 'product-table';
-            for (const p of items) {
-                const row = table.insertRow();
-                row.insertCell().textContent = p.name;
-                row.insertCell().innerHTML = `<span class="muted">${p.countryOfOrigin}</span>`;
-                const price = row.insertCell();
-                price.className = 'num';
-                price.textContent = money.format(p.price);
-                const action = row.insertCell();
-                action.className = 'num';
-                const button = document.createElement('button');
-                button.textContent = 'Add';
-                button.onclick = () => addToCart(p.id);
-                action.appendChild(button);
-            }
-            container.appendChild(table);
+    function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined) {
+            node.textContent = text;
+        }
+        return node;
+    }
+
+    function quantityInCart(productId) {
+        const line = currentCart.lines.find(l => l.product.id === productId);
+        return line ? line.quantity : 0;
+    }
+
+    function stepper(productId) {
+        const wrap = el('span', 'stepper');
+        const minus = el('button', null, '−');
+        minus.setAttribute('aria-label', 'One less');
+        minus.onclick = () => changeQuantity(productId, quantityInCart(productId) - 1);
+        const plus = el('button', null, '+');
+        plus.setAttribute('aria-label', 'One more');
+        plus.onclick = () => addToCart(productId);
+        wrap.append(minus, el('span', null, String(quantityInCart(productId))), plus);
+        return wrap;
+    }
+
+    function renderChips() {
+        const chips = document.getElementById('category-chips');
+        chips.innerHTML = '';
+        const present = new Set(products.map(p => p.category));
+        const options = [['ALL', 'All'], ...Object.entries(CATEGORIES).filter(([key]) => present.has(key))];
+        for (const [key, label] of options) {
+            const chip = el('button', 'chip', label);
+            chip.setAttribute('aria-pressed', String(key === activeCategory));
+            chip.onclick = () => {
+                activeCategory = key;
+                renderChips();
+                renderProducts();
+            };
+            chips.append(chip);
         }
     }
 
+    function renderProducts() {
+        const container = document.getElementById('products');
+        container.innerHTML = '';
+        for (const p of products.filter(p => activeCategory === 'ALL' || p.category === activeCategory)) {
+            const inCart = quantityInCart(p.id) > 0;
+            const card = el('div', inCart ? 'card in-cart' : 'card');
+            card.append(el('div', 'title', p.name));
+            const meta = el('div', 'meta');
+            meta.append(el('span', 'price', money.format(p.price)),
+                el('span', 'pill', `${FLAGS[p.countryOfOrigin] || ''} ${p.countryOfOrigin}`));
+            card.append(meta);
+            if (inCart) {
+                card.append(stepper(p.id));
+            } else {
+                const add = el('button', 'add', 'Add to cart');
+                add.onclick = () => addToCart(p.id);
+                card.append(add);
+            }
+            container.append(card);
+        }
+    }
+
+    function suggestionRow(p) {
+        const row = el('div', 'suggestion');
+        const info = el('div');
+        info.append(el('span', 'name', p.name), el('span', 'muted', money.format(p.price)));
+        const add = el('button', null, '+ Add');
+        add.onclick = () => addToCart(p.id);
+        row.append(info, add);
+        return row;
+    }
+
+    // Suggests products not yet bought, favouring categories the customer already shops in.
+    function fillSuggestions(listId, boxId, exclude, limit, favouredCategories) {
+        const candidates = products.filter(p => !exclude.has(p.id));
+        const favoured = candidates.filter(p => favouredCategories.has(p.category));
+        const others = candidates.filter(p => !favouredCategories.has(p.category));
+        const picks = [...favoured, ...others].slice(0, limit);
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        picks.forEach(p => list.append(suggestionRow(p)));
+        document.getElementById(boxId).hidden = picks.length === 0;
+    }
+
     function renderCart(cart) {
-        const tbody = document.getElementById('cart-lines');
-        tbody.innerHTML = '';
+        currentCart = cart;
+        const lines = document.getElementById('cart-lines');
+        lines.innerHTML = '';
+        if (cart.lines.length === 0) {
+            lines.append(el('div', 'empty', 'Your cart is empty. Pick something you like! 👆'));
+        }
         for (const line of cart.lines) {
-            const row = tbody.insertRow();
-            row.insertCell().textContent = line.product.name;
-            const qty = row.insertCell();
-            qty.className = 'num';
-            qty.textContent = line.quantity;
-            const total = row.insertCell();
-            total.className = 'num';
-            total.textContent = money.format(line.lineTotal);
-            const lineVat = document.createElement('div');
-            lineVat.className = 'muted';
-            lineVat.textContent = `+ ${money.format(line.vat)} BTW (${percent.format(line.vatRate / 100)})`;
-            total.appendChild(lineVat);
-            const action = row.insertCell();
-            action.className = 'num';
-            const button = document.createElement('button');
-            button.textContent = 'Remove';
-            button.onclick = () => removeFromCart(line.product.id);
-            action.appendChild(button);
+            const row = el('div', 'cart-line');
+            row.append(el('span', 'name', line.product.name));
+            const total = el('span', 'total', money.format(line.lineTotal));
+            total.append(el('div', 'muted', `+ ${money.format(line.vat)} BTW (${percent.format(line.vatRate / 100)})`));
+            row.append(total);
+            row.append(stepper(line.product.id));
+            const remove = el('button', 'link', 'Remove');
+            remove.onclick = () => removeFromCart(line.product.id);
+            row.append(remove);
+            lines.append(row);
         }
         document.getElementById('subtotal').textContent = money.format(cart.subtotal);
         document.getElementById('vat').textContent = money.format(cart.vat);
         document.getElementById('subtotalInclVAT').textContent = money.format(cart.subtotalInclVAT);
+
+        const items = cart.lines.reduce((sum, l) => sum + l.quantity, 0);
+        const nudge = document.getElementById('nudge');
+        if (items > 0 && items < NUDGE_THRESHOLD) {
+            const missing = NUDGE_THRESHOLD - items;
+            nudge.textContent = `🛍️ Add ${missing} more item${missing > 1 ? 's' : ''} and make this order count!`;
+            nudge.hidden = false;
+        } else {
+            nudge.hidden = true;
+        }
+        document.getElementById('checkout-btn').disabled = items === 0;
+        document.getElementById('totals').hidden = items === 0;
+        document.getElementById('cart-bar-text').textContent =
+            items === 0 ? 'Cart is empty' : `${items} item${items > 1 ? 's' : ''} · ${money.format(cart.subtotalInclVAT)}`;
+
+        fillSuggestions('suggestion-list', 'suggestions', new Set(cart.lines.map(l => l.product.id)), 3,
+            new Set(cart.lines.map(l => l.product.category)));
+        renderProducts();
+    }
+
+    function bumpCart() {
+        const panel = document.getElementById('cart-panel');
+        panel.classList.remove('bump');
+        void panel.offsetWidth;
+        panel.classList.add('bump');
     }
 
     async function addToCart(productId) {
         renderCart(await api('/api/cart/items', {method: 'POST', body: JSON.stringify({productId, quantity: 1})}));
+        bumpCart();
     }
 
     async function removeFromCart(productId) {
         renderCart(await api(`/api/cart/items/${productId}`, {method: 'DELETE'}));
+    }
+
+    // The API has no decrement, so lower a quantity by removing the line and re-adding the rest.
+    async function changeQuantity(productId, quantity) {
+        let cart = await api(`/api/cart/items/${productId}`, {method: 'DELETE'});
+        if (quantity > 0) {
+            cart = await api('/api/cart/items', {method: 'POST', body: JSON.stringify({productId, quantity})});
+        }
+        renderCart(cart);
     }
 
     const cartView = document.getElementById('cart-view');
@@ -610,8 +950,7 @@
             ? 'Delivery to Poland. E-books are sent by email, other products are shipped to the address below.'
             : 'Delivery to Poland by email, no shipping costs.';
         document.getElementById('checkout-subtotal').textContent = money.format(cart.subtotal);
-        const shippingRow = document.getElementById('checkout-shipping-row');
-        shippingRow.hidden = !shippingRequired;
+        document.getElementById('checkout-shipping-row').hidden = !shippingRequired;
         document.getElementById('checkout-shipping').textContent =
             `${money.format(cart.shipping)} + ${money.format(cart.shippingVat)} BTW (${percent.format(cart.shippingVatRate / 100)})`;
         document.getElementById('checkout-vat').textContent = money.format(cart.orderVat);
@@ -622,6 +961,9 @@
     };
 
     document.getElementById('back-to-cart').onclick = () => showStep('cart');
+
+    document.getElementById('cart-bar-btn').onclick = () =>
+        document.getElementById('cart-panel').scrollIntoView({behavior: 'smooth'});
 
     form.onsubmit = async event => {
         event.preventDefault();
@@ -653,23 +995,18 @@
         const address = order.shippingAddress;
         if (address) {
             delivery.append('Shipped to ');
-            const strong = document.createElement('strong');
-            strong.textContent = `${address.fullName}, ${address.street}, ${address.postalCode} ${address.city}, Poland`;
-            delivery.append(strong, '. Confirmation sent to ');
+            delivery.append(el('strong', null, `${address.fullName}, ${address.street}, ${address.postalCode} ${address.city}, Poland`));
+            delivery.append('. Confirmation sent to ');
         } else {
             delivery.append('Sent to ');
         }
-        const emailStrong = document.createElement('strong');
-        emailStrong.textContent = order.email;
-        delivery.append(emailStrong, address ? '.' : ', no shipping costs.');
-        const tbody = document.getElementById('order-lines');
-        tbody.innerHTML = '';
+        delivery.append(el('strong', null, order.email), address ? '.' : ', no shipping costs.');
+        const container = document.getElementById('order-lines');
+        container.innerHTML = '';
         for (const line of order.lines) {
-            const row = tbody.insertRow();
-            row.insertCell().textContent = `${line.quantity} × ${line.name}`;
-            const total = row.insertCell();
-            total.className = 'num';
-            total.textContent = money.format(line.lineTotal);
+            const row = el('div', 'order-line');
+            row.append(el('span', null, `${line.quantity} × ${line.name}`), el('span', null, money.format(line.lineTotal)));
+            container.append(row);
         }
         document.getElementById('order-subtotal').textContent = money.format(order.subtotal);
         const hasShipping = Number(order.shipping) > 0;
@@ -678,6 +1015,9 @@
             `${money.format(order.shipping)} + ${money.format(order.shippingVat)} BTW (${percent.format(order.shippingVatRate / 100)})`;
         document.getElementById('order-vat').textContent = money.format(order.vat);
         document.getElementById('order-total').textContent = money.format(order.total);
+        const boughtIds = new Set(order.lines.map(l => l.productId));
+        const boughtCategories = new Set(products.filter(p => boughtIds.has(p.id)).map(p => p.category));
+        fillSuggestions('after-suggestion-list', 'after-suggestions', boughtIds, 3, boughtCategories);
         form.reset();
         for (const input of fieldInputs) {
             delete input.dataset.touched;
@@ -687,8 +1027,11 @@
 
     document.getElementById('new-order').onclick = () => showStep('cart');
 
-    api('/api/products').then(renderProducts);
-    api('/api/cart').then(renderCart);
+    Promise.all([api('/api/products'), api('/api/cart')]).then(([loaded, cart]) => {
+        products = loaded;
+        renderChips();
+        renderCart(cart);
+    });
 </script>
 </body>
 </html>

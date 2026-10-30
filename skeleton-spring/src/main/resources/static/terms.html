@@ -6,41 +6,63 @@
     <title>EuroCart – Terms &amp; Conditions</title>
     <style>
         :root {
-            --paper: #f3f0e8;
-            --panel: #fffdf7;
-            --ink: #171717;
-            --muted: #6b6962;
-            --orange: #ff5a1f;
+            color-scheme: light;
+            --cream: #fff8ef;
+            --card: #ffffff;
+            --ink: #2b2a4c;
+            --muted: #6c6a8a;
+            --line: #ece4f5;
+            --lavender: #e9e2ff;
+            --violet: #7b5cff;
+            --sun: #ffe27a;
+            --radius: 18px;
+            --shadow: 0 6px 18px rgba(80, 60, 140, .12);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: system-ui, sans-serif;
+            font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
             margin: 0;
             padding: 1rem;
-            background: var(--paper);
+            background: var(--cream);
             color: var(--ink);
-            line-height: 1.5;
+            line-height: 1.55;
         }
 
         main {
             max-width: 46rem;
             margin: 0 auto;
-            padding: 1rem 1.5rem 2rem;
-            background: var(--panel);
-            border: 2px solid var(--ink);
+            padding: 1.25rem 1.5rem 2rem;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
         }
 
         h1 {
             display: inline-block;
-            padding: .2rem .55rem;
-            background: var(--orange);
-            border: 2px solid var(--ink);
+            margin: 0 0 .5rem;
+            padding: .15rem .8rem;
+            background: var(--sun);
+            border-radius: 999px;
+            transform: rotate(-1deg);
             font-size: 1.5rem;
+            letter-spacing: -.01em;
         }
 
         h2 {
-            margin-top: 1.6rem;
+            margin: 1.6rem 0 .3rem;
             font-size: 1.1rem;
+            padding: .2rem .7rem;
+            background: var(--lavender);
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        p {
+            margin: .3rem 0;
         }
 
         .muted {
@@ -48,7 +70,27 @@
         }
 
         a {
-            color: var(--ink);
+            color: var(--violet);
+            font-weight: 700;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--violet);
+            outline-offset: 2px;
+        }
+
+        #back {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: .5rem 1.1rem;
+            background: var(--lavender);
+            border-radius: 999px;
+            text-decoration: none;
+        }
+
+        #back:hover {
+            background: var(--violet);
+            color: #fff;
         }
     </style>
 </head>
