@@ -187,6 +187,12 @@
             min-height: 1.1em;
         }
 
+        .card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
         [hidden] {
             display: none !important;
         }
@@ -282,6 +288,26 @@
             <input id="email2" type="email" autocomplete="off">
             <div class="field-error" id="email2-error"></div>
             <p class="muted">Delivery to Poland by email, no shipping costs.</p>
+            <h3>Payment</h3>
+            <label for="cardName">Name on card</label>
+            <input id="cardName" type="text" autocomplete="cc-name">
+            <div class="field-error" id="cardName-error"></div>
+            <label for="cardNumber">Card number</label>
+            <input id="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="23">
+            <div class="field-error" id="cardNumber-error"></div>
+            <div class="card-row">
+                <div>
+                    <label for="cardExpiry">Expiry (MM/YY)</label>
+                    <input id="cardExpiry" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5">
+                    <div class="field-error" id="cardExpiry-error"></div>
+                </div>
+                <div>
+                    <label for="cardCvc">CVC</label>
+                    <input id="cardCvc" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4">
+                    <div class="field-error" id="cardCvc-error"></div>
+                </div>
+            </div>
+            <p class="muted">Card details are only checked in your browser and are never sent to or stored by the server.</p>
             <label class="check"><input type="checkbox" id="terms"> I accept the Terms &amp; Conditions</label>
             <p>
                 <button type="submit" id="place-order" class="primary" disabled>Place order</button>
@@ -401,7 +427,44 @@
     const email2Input = document.getElementById('email2');
     const termsInput = document.getElementById('terms');
     const placeOrder = document.getElementById('place-order');
+    const cardNameInput = document.getElementById('cardName');
+    const cardNumberInput = document.getElementById('cardNumber');
+    const cardExpiryInput = document.getElementById('cardExpiry');
+    const cardCvcInput = document.getElementById('cardCvc');
+    const fieldInputs = [emailInput, email2Input, cardNameInput, cardNumberInput, cardExpiryInput, cardCvcInput];
     const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+    function luhnValid(digits) {
+        let sum = 0;
+        for (let i = 0; i < digits.length; i++) {
+            let d = Number(digits[digits.length - 1 - i]);
+            if (i % 2 === 1) {
+                d *= 2;
+                if (d > 9) {
+                    d -= 9;
+                }
+            }
+            sum += d;
+        }
+        return sum % 10 === 0;
+    }
+
+    function cardNumberProblem() {
+        const digits = cardNumberInput.value.replace(/\s/g, '');
+        return /^\d{13,19}$/.test(digits) && luhnValid(digits) ? '' : 'Please enter a valid card number.';
+    }
+
+    function cardExpiryProblem() {
+        const match = /^(\d{2})\/(\d{2})$/.exec(cardExpiryInput.value);
+        if (!match) {
+            return 'Please enter the expiry date as MM/YY.';
+        }
+        const month = Number(match[1]);
+        const year = 2000 + Number(match[2]);
+        const now = new Date();
+        const expired = year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1);
+        return month >= 1 && month <= 12 && !expired ? '' : 'This card has expired or the date is invalid.';
+    }
 
     // The cart panel shows exactly one step at a time: 'cart', 'checkout' or 'summary'.
     function showStep(step) {
@@ -415,7 +478,11 @@
         const email = emailInput.value.trim();
         const problems = {
             email: EMAIL.test(email) ? '' : 'Please enter a valid email address.',
-            email2: email2Input.value.trim() === email ? '' : 'The email addresses do not match.'
+            email2: email2Input.value.trim() === email ? '' : 'The email addresses do not match.',
+            cardName: cardNameInput.value.trim() ? '' : 'Please enter the name on the card.',
+            cardNumber: cardNumberProblem(),
+            cardExpiry: cardExpiryProblem(),
+            cardCvc: cardCvcInput.value.trim().length === 3 ? '' : 'Please enter a valid CVC.'
         };
         for (const [field, message] of Object.entries(problems)) {
             const show = showAll || document.getElementById(field).dataset.touched;
@@ -432,6 +499,31 @@
             validate(false);
         });
     }
+
+    cardNameInput.addEventListener('input', () => {
+        cardNameInput.dataset.touched = 'true';
+        validate(false);
+    });
+
+    cardNumberInput.addEventListener('input', () => {
+        const digits = cardNumberInput.value.replace(/\D/g, '').slice(0, 19);
+        cardNumberInput.value = digits.replace(/(.{4})(?=.)/g, '$1 ');
+        cardNumberInput.dataset.touched = 'true';
+        validate(false);
+    });
+
+    cardExpiryInput.addEventListener('input', () => {
+        const digits = cardExpiryInput.value.replace(/\D/g, '').slice(0, 4);
+        cardExpiryInput.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+        cardExpiryInput.dataset.touched = 'true';
+        validate(false);
+    });
+
+    cardCvcInput.addEventListener('input', () => {
+        cardCvcInput.value = cardCvcInput.value.replace(/\D/g, '').slice(0, 4);
+        cardCvcInput.dataset.touched = 'true';
+        validate(false);
+    });
 
     termsInput.addEventListener('change', () => validate(false));
 
@@ -478,7 +570,7 @@
         document.getElementById('order-vat').textContent = money.format(order.vat);
         document.getElementById('order-total').textContent = money.format(order.total);
         form.reset();
-        for (const input of [emailInput, email2Input]) {
+        for (const input of fieldInputs) {
             delete input.dataset.touched;
         }
         showStep('summary');
