@@ -25,7 +25,7 @@ public class OrderController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Order create(@RequestBody CreateOrderRequest request) {
-		return orders.create(request.email());
+		return orders.create(request.email(), request.acceptedTermsVersion());
 	}
 
 	@GetMapping("/{id}")
