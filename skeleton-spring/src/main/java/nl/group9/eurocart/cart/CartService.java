@@ -57,33 +57,37 @@ public class CartService {
     }
 
     public synchronized CartView view() {
+        // Amounts are calculated from the exact local price and rounded only where they are reported.
+        Map<String, BigDecimal> exactNets = new LinkedHashMap<>();
+        quantitiesByProductId.forEach((id, quantity) ->
+                exactNets.put(id, catalogue.exactPrice(id).multiply(BigDecimal.valueOf(quantity))));
         List<CartLine> lines = quantitiesByProductId.entrySet().stream()
-                .map(entry -> CartLine.of(product(entry.getKey()), entry.getValue()))
+                .map(entry -> CartLine.of(product(entry.getKey()), entry.getValue(), exactNets.get(entry.getKey())))
                 .toList();
-        BigDecimal subtotal = lines.stream()
-                .map(CartLine::lineTotal)
+        BigDecimal exactSubtotal = exactNets.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal exactProductVat = lines.stream()
+                .map(line -> CartLine.exactVat(exactNets.get(line.product().id()), line.vatRate()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        // Sum the unrounded BTW of every line and round only once.
-        BigDecimal vat = lines.stream()
-                .map(line -> CartLine.exactVat(line.lineTotal(), line.vatRate()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal subtotal = round(exactSubtotal);
+        BigDecimal vat = round(exactProductVat);
 
         boolean shippingRequired = lines.stream().anyMatch(line -> line.product().category().physical());
-        BigDecimal shipping = shippingRequired
-                ? Currency.EUR.convertTo(Currency.LOCAL, SHIPPING_EUR)
-                : BigDecimal.ZERO.setScale(2);
+        BigDecimal exactShipping = shippingRequired
+                ? Currency.EUR.convertExact(Currency.LOCAL, SHIPPING_EUR)
+                : BigDecimal.ZERO;
+        BigDecimal shipping = round(exactShipping);
         BigDecimal shippingVatRate = VatRates.shippingRate(Country.PL);
-        BigDecimal exactShippingVat = CartLine.exactVat(shipping, shippingVatRate);
-        BigDecimal shippingVat = exactShippingVat.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal exactShippingVat = CartLine.exactVat(exactShipping, shippingVatRate);
+        BigDecimal shippingVat = round(exactShippingVat);
         // Products and shipping BTW are added up unrounded and rounded once, like the rest of the order.
-        BigDecimal orderVat = lines.stream()
-                .map(line -> CartLine.exactVat(line.lineTotal(), line.vatRate()))
-                .reduce(exactShippingVat, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal orderVat = round(exactProductVat.add(exactShippingVat));
         BigDecimal orderTotal = subtotal.add(shipping).add(orderVat);
         return new CartView(lines, subtotal, vat, subtotal.add(vat), shippingRequired, shipping,
                 shippingVatRate, shippingVat, orderVat, orderTotal);
+    }
+
+    private static BigDecimal round(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.HALF_UP);
     }
 
     private Product product(String productId) {

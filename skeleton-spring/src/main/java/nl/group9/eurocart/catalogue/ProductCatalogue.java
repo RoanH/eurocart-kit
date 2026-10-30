@@ -8,6 +8,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,12 @@ import java.util.Optional;
 public class ProductCatalogue {
 
     private final Map<String, Product> productsById;
+
+    /**
+     * Unrounded local-currency price per product id. {@link Product#price()} is rounded to cents for display;
+     * amounts are calculated from this exact price and rounded only when they are reported.
+     */
+    private final Map<String, BigDecimal> exactPricesById = new LinkedHashMap<>();
 
     public ProductCatalogue(ObjectMapper objectMapper) {
         this.productsById = load(objectMapper);
@@ -30,13 +37,21 @@ public class ProductCatalogue {
         return Optional.ofNullable(productsById.get(id));
     }
 
-    private static Map<String, Product> load(ObjectMapper objectMapper) {
+    /**
+     * The unrounded local-currency price (excl. BTW) of a known product.
+     */
+    public BigDecimal exactPrice(String id) {
+        return exactPricesById.get(id);
+    }
+
+    private Map<String, Product> load(ObjectMapper objectMapper) {
         try (InputStream in = new ClassPathResource("catalogue.json").getInputStream()) {
             List<Product> products = objectMapper.readValue(in, new TypeReference<List<Product>>() {
             });
             Map<String, Product> byId = new LinkedHashMap<>();
             for (Product catalogued : products) {
                 Product product = inLocalCurrency(catalogued);
+                exactPricesById.put(product.id(), Currency.EUR.convertExact(Currency.LOCAL, catalogued.price()));
                 if (byId.put(product.id(), product) != null) {
                     throw new IllegalStateException("Duplicate product id in catalogue.json: " + product.id());
                 }
@@ -48,7 +63,8 @@ public class ProductCatalogue {
     }
 
     /**
-     * catalogue.json prices are in EUR; the shop shows and sells in the local currency.
+     * catalogue.json prices are in EUR; the shop shows and sells in the local currency. The price on the
+     * returned product is only the rounded display price.
      */
     private static Product inLocalCurrency(Product product) {
         return new Product(product.id(), product.name(), product.category(),

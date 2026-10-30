@@ -7,17 +7,19 @@ import nl.group9.eurocart.catalogue.Country;
 import nl.group9.eurocart.catalogue.Product;
 
 /**
- * @param lineTotal price times quantity, excluding BTW
+ * @param lineTotal price times quantity, excluding BTW, rounded for display only
  * @param vatRate BTW percentage that applies to this line
  * @param vat BTW on this line, rounded for display only; the cart BTW is computed from unrounded amounts
  */
 public record CartLine(Product product, int quantity, BigDecimal lineTotal, BigDecimal vatRate, BigDecimal vat) {
 
-	public static CartLine of(Product product, int quantity) {
-		BigDecimal lineTotal = product.price().multiply(BigDecimal.valueOf(quantity));
+	/**
+	 * @param exactNet unrounded line amount excluding BTW, from the exact local price times the quantity
+	 */
+	public static CartLine of(Product product, int quantity, BigDecimal exactNet) {
 		BigDecimal vatRate = VatRates.rate(Country.PL, product.category());
-		BigDecimal vat = exactVat(lineTotal, vatRate).setScale(2, RoundingMode.HALF_UP);
-		return new CartLine(product, quantity, lineTotal, vatRate, vat);
+		return new CartLine(product, quantity, exactNet.setScale(2, RoundingMode.HALF_UP), vatRate,
+				exactVat(exactNet, vatRate).setScale(2, RoundingMode.HALF_UP));
 	}
 
 	/**

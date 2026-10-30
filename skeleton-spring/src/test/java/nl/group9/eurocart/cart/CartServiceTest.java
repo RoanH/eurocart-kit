@@ -25,11 +25,11 @@ class CartServiceTest {
 
 	@Test
 	void addsProductsAndSumsPricesExcludingVat() {
-		cart.add("BOK-001", 2); // 2 x 12.50 EUR = 2 x 54.35 PLN
-		CartView view = cart.add("FOD-002", 1); // 1 x 1.29 EUR = 5.61 PLN
+		cart.add("BOK-001", 2); // 2 x 12.50 EUR
+		CartView view = cart.add("FOD-002", 1); // 1 x 1.29 EUR
 
 		assertThat(view.lines()).hasSize(2);
-		assertThat(view.subtotal()).isEqualByComparingTo("114.31");
+		assertThat(view.subtotal()).isEqualByComparingTo("114.30"); // 26.29 EUR = 114.3043 PLN
 	}
 
 	@Test
@@ -39,7 +39,7 @@ class CartServiceTest {
 
 		assertThat(view.lines()).singleElement().satisfies(line -> {
 			assertThat(line.quantity()).isEqualTo(4);
-			assertThat(line.lineTotal()).isEqualByComparingTo("43.32"); // 4 x 10.83 PLN
+			assertThat(line.lineTotal()).isEqualByComparingTo("43.30"); // 4 x 2.49 EUR = 43.3043 PLN
 		});
 	}
 
@@ -86,6 +86,28 @@ class CartServiceTest {
 		// The real BTW is computed on the unrounded total: 2.387 -> 2.39
 		assertThat(view.vat()).isEqualByComparingTo("2.39");
 		assertThat(view.subtotalInclVAT()).isEqualByComparingTo("50.13");
+	}
+
+	@Test
+	void convertsFromEuroExactlyAndRoundsOnlyTheReportedAmounts() {
+		// 3 x 8.99 EUR = 26.97 EUR = 117.2609 PLN; rounding the unit price first would give 3 x 39.09 = 117.27
+		CartView view = cart.add("EBK-001", 3);
+
+		assertThat(view.subtotal()).isEqualByComparingTo("117.26");
+		assertThat(view.vat()).isEqualByComparingTo("5.86"); // 5.8630
+		assertThat(view.subtotalInclVAT()).isEqualByComparingTo("123.12");
+		assertThat(view.lines()).singleElement()
+				.satisfies(line -> assertThat(line.lineTotal()).isEqualByComparingTo("117.26"));
+	}
+
+	@Test
+	void largeQuantitiesDoNotAccumulateUnitPriceRoundingErrors() {
+		// 25 x 1649 EUR = 41225 EUR = 179239.1304 PLN; rounding the unit price first would give 179239.25
+		CartView view = cart.add("LAP-002", 25);
+
+		assertThat(view.subtotal()).isEqualByComparingTo("179239.13");
+		assertThat(view.vat()).isEqualByComparingTo("41225.00"); // 23% of 179239.1304
+		assertThat(view.subtotalInclVAT()).isEqualByComparingTo("220464.13");
 	}
 
 	@Test
