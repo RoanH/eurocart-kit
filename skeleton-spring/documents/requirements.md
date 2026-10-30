@@ -103,7 +103,7 @@ Deze punten zijn niet voldoende eenduidig of volledig bevestigd in de interviews
 
 - **A1 – Betaling:** Er is een betaalstap nodig, maar de betaalmethode(n), betaalprovider en foutafhandeling zijn niet gespecificeerd.
 - **A2 – ‘Invisible checkout’:** Dit betekent vermoedelijk een zeer korte, afleidingsvrije checkout; de precieze schermen, velden en verplichte klantgegevens zijn onbekend.
-- **A3 – Account en gastcheckout:** Er is niet vastgesteld of een klant een account nodig heeft of als gast kan afrekenen.
+- **A3 – Account en gastcheckout:** ~~Er is niet vastgesteld of een klant een account nodig heeft of als gast kan afrekenen.~~ Besloten: alleen gastcheckout, geen account. De klant geeft per bestelling naam en e-mailadres op (zie [slices-checkout.md](./slices-checkout.md)).
 - **A4 – Landbepaling:** Deels opgelost met R14a en R14b: het land wordt vanaf het eerste bezoek voorgeselecteerd op basis van de browsertaal en de klant kan het met één klik wijzigen; dat land is het land van het afleveradres. Open: moet het land in plaats daarvan uit het domein komen (bijv. eurocart.de)?
 - **A5 – Valutaweergave:** Finance noemt euro als schermvaluta, terwijl Compliance lokale valuta voorschrijft. Compliance is hier als leidend uitgangspunt gebruikt; de definitieve valuta per land moet worden bevestigd.
 - **A6 – Wisselkoersen:** Deels opgelost: koersen aangeleverd door Finance (R13a). Open: voor welk kwartaal ze gelden (aangenomen Q4 2026), wie de koersen van volgende kwartalen aanlevert, en of omrekenen vanuit EUR met het exacte quotiënt (1 / 0,23) moet.

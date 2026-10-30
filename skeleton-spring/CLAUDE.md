@@ -28,5 +28,7 @@ Java 21, Spring Boot 4.1, Maven wrapper.
 
 High-level, partly contradictory ("noisy") requirements live in `documents/` (Dutch):
 
+- @documents/implementation-status.md: what is already built per slice, deviations and what is next.
+- @documents/slices-checkout.md: the checkout slice plan.
 - @documents/requirements.md: derived requirements, assumptions and open points.
 - @documents/EuroCart_stakeholder_memos.md: raw stakeholder memos (PO, Finance, Compliance, Sales). Ask before resolving conflicts between them.
